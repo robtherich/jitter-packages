@@ -1,0 +1,57 @@
+{ "wireframe-jxs" : {
+	"param" :  { 
+            "common" : [ 
+	    "<param name=\"viewport\" type=\"vec2\" state=\"VIEWPORT\" />",
+	    "<param name=\"line_color\" type=\"vec4\" default=\"1 0 0 1\" />",
+	    "<param name=\"width\" type=\"float\" default=\"1.0\" />"
+            ],
+            "texture" : [ 
+	    "<param name=\"tex\" type=\"int\" default=\"0\" />"
+            ]
+        },
+        "bind" :  {
+            "common" : [ 
+		"<bind param=\"viewport\" program=\"gp\" />",
+		"<bind param=\"line_color\" program=\"fp\" />",
+		"<bind param=\"width\" program=\"fp\" />"
+            ],
+            "texture" : [
+                "<bind param=\"tex\" program=\"fp\" />"
+            ]
+        },
+        "program" : {
+            "vp" : "<program name=\"vp\" type=\"vertex\">",
+            "fp" : "<program name=\"fp\" type=\"fragment\">",
+            "gp-triangles" :"<program name=\"gp\" vertices_out=\"3\" input_type=\"triangles\" output_type=\"triangles\" type=\"geometry\">",
+            "gp-trigrid" :"<program name=\"gp\" vertices_out=\"3\" input_type=\"triangle_strip\" output_type=\"triangle_strip\" type=\"geometry\">"
+        }
+}, 
+"wireframe-glsl" : {
+    "vp-tex" : {
+        "decl" : "varying vec2 texcoord0;",
+        "op" : "texcoord0 = vec2(gl_TextureMatrix[0] * gl_MultiTexCoord0);"
+    },
+    "gp-tex" : {
+        "decl" : "varying in vec2 texcoord0[1]; \nvarying out vec2 TC;",
+        "op" : "TC = texcoord0[0];"
+    },
+    "gp-quad" : {
+        "op" : "if(mod(gl_PrimitiveIDIn,2) == 0) edge.x = 100.;\nelse edge.z = 100.;"
+    },
+    "fp-tex-solid" : {
+        "decl" : "varying vec2 TC; \nuniform ${tex.sampler} tex;",
+        "op" : "vec4 texcolor= ${tex.sample}(tex,TC); \n solidC = solidC * texcolor;"
+    },
+    "fp-tex-lines" : {
+        "decl" : "varying vec2 TC; \nuniform ${tex.sampler} tex;",
+        "op" : "vec4 texcolor= ${tex.sample}(tex,TC); \n lineC = lineC * texcolor;"
+    },
+    "texture" : {
+        "sampler" : "sampler2D",
+        "sample" : "texture2D"
+    },
+    "texture-rect" : {
+        "sampler" : "sampler2DRect",
+        "sample" : "texture2DRect"
+    }
+}}
