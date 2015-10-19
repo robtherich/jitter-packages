@@ -11,7 +11,8 @@ void main(void)
 	vec2 p0 = viewport * gl_PositionIn[0].xy / gl_PositionIn[0].w;
 	vec2 p1 = viewport* gl_PositionIn[1].xy / gl_PositionIn[1].w;
 	vec2 p2 = viewport* gl_PositionIn[2].xy / gl_PositionIn[2].w;
-    
+    int vindex = 0;
+
     ${quad.op}
 
 	vec2 v0 = p2-p1;
@@ -20,22 +21,24 @@ void main(void)
 	float fArea = abs(v1.x*v2.y - v1.y * v2.x);
 
 	distance = vec3(fArea/length(v0),edge.y, edge.z);
-	distance *= gl_PositionIn[0].w;
-	gl_Position = gl_PositionIn[0];
+	distance *= gl_PositionIn[vindex].w;
+	gl_Position = gl_PositionIn[vindex];
 	gl_FrontColor = gl_FrontColorIn[0];
     ${tex.op}
+    vindex++;
 	EmitVertex();
 
 	distance = vec3(edge.x,fArea/length(v1),edge.z);
-	distance *= gl_PositionIn[1].w;
-	gl_Position = gl_PositionIn[1];
+	distance *= gl_PositionIn[vindex].w;
+	gl_Position = gl_PositionIn[vindex];
 	gl_FrontColor = gl_FrontColorIn[0];
     ${tex.op}
+    vindex++;
 	EmitVertex();
 
 	distance = vec3(edge.x,edge.y,fArea/length(v2));
-	distance *= gl_PositionIn[2].w;
-	gl_Position = gl_PositionIn[2];
+	distance *= gl_PositionIn[vindex].w;
+	gl_Position = gl_PositionIn[vindex];
 	gl_FrontColor = gl_FrontColorIn[0];
     ${tex.op}
 	EmitVertex();

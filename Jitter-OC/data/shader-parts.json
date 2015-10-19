@@ -1,19 +1,19 @@
 { "wireframe-jxs" : {
 	"param" :  { 
             "common" : [ 
-	    "<param name=\"viewport\" type=\"vec2\" state=\"VIEWPORT\" />",
-	    "<param name=\"line_color\" type=\"vec4\" default=\"1 0 0 1\" />",
-	    "<param name=\"width\" type=\"float\" default=\"1.0\" />"
+                "<param name=\"viewport\" type=\"vec2\" state=\"VIEWPORT\" />",
+                "<param name=\"line_color\" type=\"vec4\" default=\"1 0 0 1\" />",
+                "<param name=\"line_width\" type=\"float\" default=\"1.0\" />"
             ],
-            "texture" : [ 
-	    "<param name=\"tex\" type=\"int\" default=\"0\" />"
+            "texture" : [
+                "<param name=\"tex\" type=\"int\" default=\"0\" />"
             ]
         },
         "bind" :  {
             "common" : [ 
-		"<bind param=\"viewport\" program=\"gp\" />",
-		"<bind param=\"line_color\" program=\"fp\" />",
-		"<bind param=\"width\" program=\"fp\" />"
+                "<bind param=\"viewport\" program=\"gp\" />",
+                "<bind param=\"line_color\" program=\"fp\" />",
+                "<bind param=\"line_width\" program=\"fp\" />"
             ],
             "texture" : [
                 "<bind param=\"tex\" program=\"fp\" />"
@@ -32,19 +32,22 @@
         "op" : "texcoord0 = vec2(gl_TextureMatrix[0] * gl_MultiTexCoord0);"
     },
     "gp-tex" : {
-        "decl" : "varying in vec2 texcoord0[1]; \nvarying out vec2 TC;",
-        "op" : "TC = texcoord0[0];"
+        "decl" : "varying in vec2 texcoord0[1]; \n\tvarying out vec2 TC;",
+        "op" : "TC = texcoord0[vindex];"
     },
     "gp-quad" : {
-        "op" : "if(mod(gl_PrimitiveIDIn,2) == 0) edge.x = 100.;\nelse edge.z = 100.;"
+        "op" : "edge.y = 100.;"
+    },
+    "gp-quad-grid" : {
+        "op" : "if(mod(gl_PrimitiveIDIn,2) == 0) edge.x = 100.;\n\t\telse edge.z = 100.;"
     },
     "fp-tex-solid" : {
         "decl" : "varying vec2 TC; \nuniform ${tex.sampler} tex;",
-        "op" : "vec4 texcolor= ${tex.sample}(tex,TC); \n solidC = solidC * texcolor;"
+        "op" : "vec4 texcolor= ${tex.sample}(tex,TC); \n\tsolidC = solidC * texcolor;"
     },
     "fp-tex-lines" : {
         "decl" : "varying vec2 TC; \nuniform ${tex.sampler} tex;",
-        "op" : "vec4 texcolor= ${tex.sample}(tex,TC); \n lineC = lineC * texcolor;"
+        "op" : "vec4 texcolor= ${tex.sample}(tex,TC); \n\tlineC = lineC * texcolor;"
     },
     "texture" : {
         "sampler" : "sampler2D",

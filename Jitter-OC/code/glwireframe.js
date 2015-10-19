@@ -8,7 +8,7 @@ var vname;
 var path_to_code_folder;
 
 // object properties
-var ismodel=false;
+var isgrid=true;
 var hastex=false;
 var lighting=false;
 var texrect=true;
@@ -23,9 +23,9 @@ declareattribute("quad",null,"setquad",0);
 	
 // shader attributes
 var line_color = [1.,0.,0.,1.];
-var width=1.;
+var line_width=1.;
 declareattribute("line_color",null,"setline_color",0);
-declareattribute("width",null,"setwidth",0);
+declareattribute("line_width",null,"setline_width",0);
 
 var debug = 1;
 
@@ -41,9 +41,13 @@ function testjson()
 	//post(params[0]+"\n");
 	//post('test1 ${1 + 2} test2 ${3 + 4}'.template());		
 	//post(greetings({name:'Andrea'}));
-	var json = getjson();	
-	post(applytemplate_tex(json["wireframe-glsl"]["vp-tex"], "gm.wireframe.vp.glsl"));
-	post(applytemplate_tex(0, "gm.wireframe.vp.glsl"));
+	var json = getjson();
+	var tex = json["wireframe-glsl"]["gp-tex"];
+	var quad = json["wireframe-glsl"]["gp-quad"];
+	var gps = applytemplate_tex(tex, quad, "gm.wireframe.gp.glsl");	
+	//post(applytemplate_quad(gps, json["wireframe-glsl"]["gp-quad"]));
+	//post(applytemplate_tex(json["wireframe-glsl"]["vp-tex"], "gm.wireframe.vp.glsl"));
+	//post(applytemplate_tex(0, "gm.wireframe.vp.glsl"));
 }
 
 function postln(arg) {
@@ -57,7 +61,7 @@ function bang() {
 }
 
 function reset() {
-	ismodel=false;
+	isgrid=true;
 	hastex=false;
 	lighting=false;
 	texrect=true;
@@ -67,11 +71,10 @@ function build_shader(ob) {
 	var p = new File(this.patcher.filepath,"read");
 	path_to_code_folder = p.foldername+"/../code/";
 	
-	if(ob.maxclass === "jit.gl.model") ismodel = true;
-	else ismodel = false;
+	isgrid = !(ob.maxclass === "jit.gl.model");
 	
 	outlet(0,"getlighting_enable");	
-	if(ismodel) {
+	if(ob.maxclass === "jit.gl.model") {
 		texrect = false;
 		//outlet(0, "material_mode", 0);
 		outlet(0, "gettexnames");
@@ -83,13 +86,13 @@ function build_shader(ob) {
 	var f = new File(fullpath);
 	if (f.isopen) {
 		f.close();
-		postln("deleting "+fullpath);
-		outlet(1, "rm", fullpath);
-		return;
+		//postln("deleting "+fullpath);
+		//outlet(1, "rm", fullpath);
+		//return;
 	}
-	//else {
+	else {
 		write_jxs(fullpath);
-	//}
+	}
 	shaderob.read(fullpath);
 	
 	outlet(0, "getdrawto");	
@@ -104,7 +107,7 @@ function build_shader_name() {
 	}
 	if(texture_lines) jxsname+="_texlines";
 	if(lighting) jxsname+="_lighting";
-	if(ismodel) jxsname+="_triangles";
+	if(!isgrid) jxsname+="_triangles";
 	else jxsname+="_trigrid";
 	if(quad)jxsname+="_quad";
 	return jxsname+".jxs"
@@ -122,6 +125,12 @@ function applytemplate_tex(tex, file) {
 	postln("applying tex template to "+path_to_code_folder+file);
 	var f = new File(path_to_code_folder+file,"read");
 	return(f.readtext().template({tex : tex})).replace(/\s*undefined/g, "\n");
+}
+
+function applytemplate_tex_quad(tex, quad, file) {
+	postln("applying tex_quad template to "+path_to_code_folder+file);
+	var f = new File(path_to_code_folder+file,"read");
+	return(f.readtext().template({tex : tex, quad : quad})).replace(/\s*undefined/g, "\n");
 }
 
 function applytemplate_sampler(s, tex) {
@@ -176,11 +185,15 @@ function write_jxs(s) {
 		close_program(f);
 		
 		// geometry program
-		if(ismodel)	open_program(f, parts["program"]["gp-triangles"]);
+		if(!isgrid)	open_program(f, parts["program"]["gp-triangles"]);
 		else open_program(f, parts["program"]["gp-trigrid"]);
-		var gps = applytemplate_tex((hastex ? glsljson["gp-tex"] : 0), "gm.wireframe.gp.glsl");
-		postln("returned string "+gps);
-		f.writestring(applytemplate_quad(gps, (quad ? glsljson["gp-quad"] : 0)));
+		f.writestring(
+			applytemplate_tex_quad(
+				(hastex ? glsljson["gp-tex"] : 0), 
+				(quad ? (isgrid ? glsljson["gp-quad-grid"] : glsljson["gp-quad"]) : 0),
+				"gm.wireframe.gp.glsl"
+			)
+		);
 		close_program(f);
 		
 		// fragment program
@@ -226,7 +239,7 @@ function setquad(arg) {
 //////////////////////////////////////////////
 
 function resend_shader_params() {
-	shaderob.param(["width"].concat([width]));
+	shaderob.param(["line_width"].concat([line_width]));
 	shaderob.param(["line_color"].concat(line_color));
 }
 
@@ -241,10 +254,10 @@ function setline_color() {
 	do_shader_param(a);
 }
 
-function setwidth() {
+function setline_width() {
 	var a = arrayfromargs(messagename,arguments);
 	if(a.length>1) {
-		width = a[1];
+		line_width = a[1];
 		do_shader_param(a);
 	}
 }

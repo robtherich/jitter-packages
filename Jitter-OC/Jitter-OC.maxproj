@@ -2,7 +2,7 @@
 	"name" : "Jitter-OC",
 	"version" : 1,
 	"creationdate" : -767888102,
-	"modificationdate" : -767223154,
+	"modificationdate" : -767111970,
 	"viewrect" : [ 31.0, 225.0, 330.0, 518.0 ],
 	"autoorganize" : 1,
 	"hideprojectwindow" : 0,
@@ -25,6 +25,11 @@
 			}
 ,
 			"glwireframe.js" : 			{
+				"kind" : "javascript",
+				"local" : 1
+			}
+,
+			"buildindex.js" : 			{
 				"kind" : "javascript",
 				"local" : 1
 			}
@@ -53,26 +58,6 @@
 				"kind" : "shader",
 				"local" : 1
 			}
-,
-			"gm.wireframe.quad.grid.jxs" : 			{
-				"kind" : "shader",
-				"local" : 1
-			}
-,
-			"gm.wireframe.quad.gp.glsl" : 			{
-				"kind" : "shader",
-				"local" : 1
-			}
-,
-			"gm.wireframe.quads.jxs" : 			{
-				"kind" : "shader",
-				"local" : 1
-			}
-,
-			"buildindex.js" : 			{
-				"kind" : "javascript",
-				"local" : 1
-			}
 
 		}
 ,
@@ -81,6 +66,10 @@
 				"kind" : "json",
 				"local" : 1
 			}
+
+		}
+,
+		"externals" : 		{
 
 		}
 
