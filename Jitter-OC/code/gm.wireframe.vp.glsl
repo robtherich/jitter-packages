@@ -1,6 +1,7 @@
 #version 120
 
 ${tex.decl}
+${light.decl}
 
 void main(void)
 {
@@ -8,4 +9,5 @@ void main(void)
 	gl_FrontColor = gl_Color;
 
     ${tex.op}
+    ${light.op}
 }

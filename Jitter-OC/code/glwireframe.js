@@ -1,5 +1,4 @@
 outlets=2;
-
 include("String.prototype.template");
 
 var curob;
@@ -31,6 +30,9 @@ var debug = 1;
 
 var shaderob = new JitterObject("jit.gl.shader");
 
+var p = new File(this.patcher.filepath,"read");
+path_to_code_folder = p.foldername+"/../code/";
+
 function testjson()
 {
 	//var d = new Dict();
@@ -41,10 +43,9 @@ function testjson()
 	//post(params[0]+"\n");
 	//post('test1 ${1 + 2} test2 ${3 + 4}'.template());		
 	//post(greetings({name:'Andrea'}));
-	var json = getjson();
-	var tex = json["wireframe-glsl"]["gp-tex"];
-	var quad = json["wireframe-glsl"]["gp-quad"];
-	var gps = applytemplate_tex(tex, quad, "gm.wireframe.gp.glsl");	
+	var json = getjson()["wireframe-glsl"];
+	post(applytemplate_tex(json["vp-tex"], json["vp-light"], "gm.wireframe.vp.glsl"));
+	post(applytemplate_tex_quad(json["gp-tex"], json["gp-light"], json["gp-quad"], "gm.wireframe.gp.glsl"));	
 	//post(applytemplate_quad(gps, json["wireframe-glsl"]["gp-quad"]));
 	//post(applytemplate_tex(json["wireframe-glsl"]["vp-tex"], "gm.wireframe.vp.glsl"));
 	//post(applytemplate_tex(0, "gm.wireframe.vp.glsl"));
@@ -67,10 +68,7 @@ function reset() {
 	texrect=true;
 }
 
-function build_shader(ob) {
-	var p = new File(this.patcher.filepath,"read");
-	path_to_code_folder = p.foldername+"/../code/";
-	
+function build_shader(ob) {	
 	isgrid = !(ob.maxclass === "jit.gl.model");
 	
 	outlet(0,"getlighting_enable");	
@@ -121,16 +119,20 @@ function getjson(){
 	return json;
 }
 
-function applytemplate_tex(tex, file) {
-	postln("applying tex template to "+path_to_code_folder+file);
-	var f = new File(path_to_code_folder+file,"read");
-	return(f.readtext().template({tex : tex})).replace(/\s*undefined/g, "\n");
+function fixtemplate(s) {
+	return s.replace(/\s*undefined/g, "\n").replace(/;,/g, ";\n");
 }
 
-function applytemplate_tex_quad(tex, quad, file) {
+function applytemplate_tex(tex, light, file) {
+	postln("applying tex template to "+path_to_code_folder+file);
+	var f = new File(path_to_code_folder+file,"read");
+	return fixtemplate(f.readtext().template({tex : tex, light : light}));
+}
+
+function applytemplate_tex_quad(tex, light, quad, file) {
 	postln("applying tex_quad template to "+path_to_code_folder+file);
 	var f = new File(path_to_code_folder+file,"read");
-	return(f.readtext().template({tex : tex, quad : quad})).replace(/\s*undefined/g, "\n");
+	return fixtemplate(f.readtext().template({tex:tex, light:light, quad:quad}));
 }
 
 function applytemplate_sampler(s, tex) {
@@ -181,29 +183,34 @@ function write_jxs(s) {
 		
 		// vertex program
 		open_program(f, parts["program"]["vp"]);	
-		f.writestring(applytemplate_tex((hastex ? glsljson["vp-tex"] : 0), "gm.wireframe.vp.glsl"));
+		f.writestring(applytemplate_tex(
+			(hastex ? glsljson["vp-tex"] : 0), 
+			(lighting ? glsljson["vp-light"] : 0), 
+			"gm.wireframe.vp.glsl"
+		));
 		close_program(f);
 		
 		// geometry program
 		if(!isgrid)	open_program(f, parts["program"]["gp-triangles"]);
 		else open_program(f, parts["program"]["gp-trigrid"]);
-		f.writestring(
-			applytemplate_tex_quad(
-				(hastex ? glsljson["gp-tex"] : 0), 
-				(quad ? (isgrid ? glsljson["gp-quad-grid"] : glsljson["gp-quad"]) : 0),
-				"gm.wireframe.gp.glsl"
-			)
-		);
+		f.writestring(applytemplate_tex_quad(
+			(hastex ? glsljson["gp-tex"] : 0), 
+			(lighting ? glsljson["gp-light"] : 0), 
+			(quad ? (isgrid ? glsljson["gp-quad-grid"] : glsljson["gp-quad"]) : 0),
+			"gm.wireframe.gp.glsl"
+		));
 		close_program(f);
 		
 		// fragment program
 		open_program(f, parts["program"]["fp"]);
-		var fpjson = (hastex ? (texture_lines ? glsljson["fp-tex-lines"] : glsljson["fp-tex-solid"]) : 0);
-		f.writestring(
-			applytemplate_sampler(
-				applytemplate_tex(fpjson, "gm.wireframe.fp.glsl"), (texrect ? glsljson["texture-rect"] : glsljson["texture"])
-			)
-		);
+		f.writestring(applytemplate_sampler(
+			applytemplate_tex(
+				(hastex ? (texture_lines ? glsljson["fp-tex-lines"] : glsljson["fp-tex-solid"]) : 0), 
+				(lighting ? glsljson["fp-light"] : 0), 
+				"gm.wireframe.fp.glsl"
+			), 
+			(texrect ? glsljson["texture-rect"] : glsljson["texture"])
+		));
 		close_program(f);
 		
 		f.writestring("</language>\n");

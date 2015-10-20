@@ -4,6 +4,7 @@ uniform vec2 viewport;
 varying out vec3 distance;
 
 ${tex.decl}
+${light.decl}
 
 void main(void)
 {
@@ -25,6 +26,7 @@ void main(void)
 	gl_Position = gl_PositionIn[vindex];
 	gl_FrontColor = gl_FrontColorIn[0];
     ${tex.op}
+    ${light.op}
     vindex++;
 	EmitVertex();
 
@@ -33,6 +35,7 @@ void main(void)
 	gl_Position = gl_PositionIn[vindex];
 	gl_FrontColor = gl_FrontColorIn[0];
     ${tex.op}
+    ${light.op}
     vindex++;
 	EmitVertex();
 
@@ -41,6 +44,7 @@ void main(void)
 	gl_Position = gl_PositionIn[vindex];
 	gl_FrontColor = gl_FrontColorIn[0];
     ${tex.op}
+    ${light.op}
 	EmitVertex();
 
 	EndPrimitive();
