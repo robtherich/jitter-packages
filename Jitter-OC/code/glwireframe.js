@@ -17,10 +17,12 @@ var overlay=0;
 var texture_lines=0;
 var quad=0;
 var discard=0;
+var light_type="directional";
 declareattribute("overlay",null,"setoverlay",0);
 declareattribute("texture_lines",null,"settexture_lines",0);
 declareattribute("quad",null,"setquad",0);
 declareattribute("discard",null,"setdiscard",0);
+declareattribute("light_type",null,"setlight_type",0);
 	
 // shader attributes
 var line_color = [1.,0.,0.,1.];
@@ -48,6 +50,7 @@ function testjson()
 	var json = getjson()["wireframe-glsl"];
 	post(applytemplate_vp("gm.wireframe.vp.glsl", json["vp-tex"], json["vp-light"]));
 	post(applytemplate_gp("gm.wireframe.gp.glsl", json["gp-tex"], json["gp-light"], json["gp-quad"]));	
+	post(applytemplate_fp("gm.wireframe.fp.glsl", 0, get_light_glsl(json["fp-light"]), 0));	
 	//post(applytemplate_quad(gps, json["wireframe-glsl"]["gp-quad"]));
 	//post(applytemplate_tex(json["wireframe-glsl"]["vp-tex"], "gm.wireframe.vp.glsl"));
 	//post(applytemplate_tex(0, "gm.wireframe.vp.glsl"));
@@ -56,6 +59,15 @@ function testjson()
 function postln(arg) {
 	if(debug)
 		post(arg+"\n");
+}
+
+function printd(d) {
+	if(typeof d === 'string')
+		postln(d);
+	else {
+		for (var key in d)
+			postln("key: "+key+". value: "+d[key]);
+	}
 }
 
 function bang() {
@@ -106,7 +118,7 @@ function build_shader_name() {
 		if(texrect)jxsname+="_rect";
 	}
 	if(texture_lines) jxsname+="_texlines";
-	if(lighting) jxsname+="_lighting";
+	if(lighting) jxsname+="_"+light_type;
 	if(!isgrid) jxsname+="_triangles";
 	else jxsname+="_trigrid";
 	if(quad)jxsname+="_quad";
@@ -127,7 +139,7 @@ function mergejson(d1, d2) {
 }
 
 function fixtemplate(s) {
-	return s.replace(/\s*undefined/g, "\n").replace(/;,/g, ";\n");
+	return s.replace(/\s*undefined/g, "\n").replace(/([;{}]),/g, "$1\n");
 }
 
 function applytemplate_vp(file, tex, light) {
@@ -164,6 +176,22 @@ function open_program_jxs(f, s) {
 
 function close_program_jxs(f) {
 	f.writestring("\n]]>\n</program>\n");
+}
+
+function get_light_glsl(json) {
+	var rdict=new Object();
+	rdict["decl"] = json["decl"];
+	rdict["pre"] = json["pre"];
+	if(light_type==="spot")
+		rdict["op"] = json["point"].concat(json["spot"]);
+	else
+		rdict["op"] = json[light_type];
+	rdict["post"] = json["post"];
+	//for(key in rdict) {
+	//	postln(key)
+	//	printd(rdict[key]);			
+	//}
+	return rdict;
 }
 
 function write_jxs(s) {
@@ -215,7 +243,7 @@ function write_jxs(s) {
 			applytemplate_fp(
 				"gm.wireframe.fp.glsl",
 				(hastex ? (texture_lines ? glsl["fp-tex-lines"] : glsl["fp-tex-solid"]) : 0), 
-				(lighting ? glsl["fp-light"] : 0),
+				(lighting ? get_light_glsl(glsl["fp-light"]) : 0),
 				(discard ? glsl["fp-discard"] : 0)
 			), 
 			(texrect ? glsl["texture-rect"] : glsl["texture"])
@@ -252,6 +280,11 @@ function setquad(arg) {
 
 function setdiscard(arg) {
 	discard = (arg);
+	bang();
+}
+
+function setlight_type(arg) {
+	light_type = (arg);
 	bang();
 }
 

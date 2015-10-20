@@ -1,30 +1,30 @@
 { "wireframe-jxs" : {
 	"param" :  { 
-            "common" : [ 
-                "<param name=\"viewport\" type=\"vec2\" state=\"VIEWPORT\" />",
-                "<param name=\"line_color\" type=\"vec4\" default=\"1 0 0 1\" />",
-                "<param name=\"line_width\" type=\"float\" default=\"1.0\" />"
-            ],
-            "texture" : [
-                "<param name=\"tex\" type=\"int\" default=\"0\" />"
-            ]
-        },
-        "bind" :  {
-            "common" : [ 
-                "<bind param=\"viewport\" program=\"gp\" />",
-                "<bind param=\"line_color\" program=\"fp\" />",
-                "<bind param=\"line_width\" program=\"fp\" />"
-            ],
-            "texture" : [
-                "<bind param=\"tex\" program=\"fp\" />"
-            ]
-        },
-        "program" : {
-            "vp" : "<program name=\"vp\" type=\"vertex\">",
-            "fp" : "<program name=\"fp\" type=\"fragment\">",
-            "gp-triangles" :"<program name=\"gp\" vertices_out=\"3\" input_type=\"triangles\" output_type=\"triangles\" type=\"geometry\">",
-            "gp-trigrid" :"<program name=\"gp\" vertices_out=\"3\" input_type=\"triangle_strip\" output_type=\"triangle_strip\" type=\"geometry\">"
-        }
+        "common" : [ 
+            "<param name=\"viewport\" type=\"vec2\" state=\"VIEWPORT\" />",
+            "<param name=\"line_color\" type=\"vec4\" default=\"1 0 0 1\" />",
+            "<param name=\"line_width\" type=\"float\" default=\"1.0\" />"
+        ],
+        "texture" : [
+            "<param name=\"tex\" type=\"int\" default=\"0\" />"
+        ]
+    },
+    "bind" :  {
+        "common" : [ 
+            "<bind param=\"viewport\" program=\"gp\" />",
+            "<bind param=\"line_color\" program=\"fp\" />",
+            "<bind param=\"line_width\" program=\"fp\" />"
+        ],
+        "texture" : [
+            "<bind param=\"tex\" program=\"fp\" />"
+        ]
+    },
+    "program" : {
+        "vp" : "<program name=\"vp\" type=\"vertex\">",
+        "fp" : "<program name=\"fp\" type=\"fragment\">",
+        "gp-triangles" :"<program name=\"gp\" vertices_out=\"3\" input_type=\"triangles\" output_type=\"triangles\" type=\"geometry\">",
+        "gp-trigrid" :"<program name=\"gp\" vertices_out=\"3\" input_type=\"triangle_strip\" output_type=\"triangle_strip\" type=\"geometry\">"
+    }
 }, 
 "wireframe-glsl" : {
     "vp-tex" : {
@@ -67,14 +67,31 @@
     },
     "fp-light" : {
         "decl" : "varying vec3 normalout;\nvarying vec4 positionout;",
-        "op" : [
+        "pre" : [
             "vec3 Vn = normalize(-vec3(positionout.xyz));",
-            "\tvec3 Nn = normalize(normalout);",
-            "\tvec3 lightToEye = normalize(positionout.xyz - gl_LightSource[0].position.xyz);",
+            "\tvec3 Nn = normalize(normalout);"
+        ],
+        "directional" : [
+            "vec3 lightToEye = -normalize(gl_LightSource[0].position.xyz);",
+            "\tfloat atten = 1.0;"
+        ],
+        "point" : [
+            "vec3 lightToEye = normalize(positionout.xyz - gl_LightSource[0].position.xyz);",
             "\tfloat d = length(positionout.xyz-gl_LightSource[0].position.xyz);",
             "\tfloat atten = gl_LightSource[0].constantAttenuation+gl_LightSource[0].linearAttenuation*d+gl_LightSource[0].quadraticAttenuation*d*d;",
-            "\tatten = 1.0/atten;",
-            "\tvec4 ambient = gl_LightSource[0].ambient*atten;",
+            "\tatten = 1.0/atten;"
+        ],
+        "spot" : [
+            "\tfloat spotatten = dot(lightToEye, normalize(gl_LightSource[0].spotDirection));",
+            "\tif(spotatten>gl_LightSource[0].spotCosCutoff) {",
+            "\t\tatten = atten*pow(spotatten, gl_LightSource[0].spotExponent);",
+            "\t}",
+            "\telse {",
+            "\t\tatten = 0.;",
+            "\t}"
+        ],
+        "post" : [
+            "vec4 ambient = gl_LightSource[0].ambient*atten;",
             "\tvec4 diffuse = gl_LightSource[0].diffuse*atten;",
             "\tvec4 specular = gl_LightSource[0].specular*atten;",
             "\tvec3 Ln = normalize(-lightToEye);",

@@ -30,7 +30,9 @@ void main (void)
     vec4 lineC = line_color;
 
     ${tex.op}
+    ${light.pre}
     ${light.op}
+    ${light.post}
 
     gl_FragColor = mix(solidC, lineC, fEdgeIntensity);
 }
