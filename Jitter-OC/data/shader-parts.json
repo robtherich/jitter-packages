@@ -27,96 +27,102 @@
     }
 }, 
 "wireframe-glsl" : {
-    "vp-tex" : {
-        "decl" : "varying vec2 texcoord0;",
-        "op" : "texcoord0 = vec2(gl_TextureMatrix[0] * gl_MultiTexCoord0);"
+    "vp" : {
+        "tex" : {
+            "decl" : "varying vec2 texcoord0;",
+            "op" : "texcoord0 = vec2(gl_TextureMatrix[0] * gl_MultiTexCoord0);"
+        },
+        "light" : {
+            "decl" : "varying vec3 normal;\n\tvarying vec4 position;",
+            "op" : "position = gl_ModelViewMatrix*gl_Vertex;\n\tnormal = gl_NormalMatrix*gl_Normal;"
+        }
     },
-    "vp-light" : {
-        "decl" : "varying vec3 normal;\n\tvarying vec4 position;",
-        "op" : "position = gl_ModelViewMatrix*gl_Vertex;\n\tnormal = gl_NormalMatrix*gl_Normal;"
+    "gp" : {
+        "tex" : {
+            "decl" : "varying in vec2 texcoord0[3];\n\tvarying out vec2 TC;",
+            "op" : "TC = texcoord0[vindex];"
+        },
+        "light" : {
+            "decl" : [
+                "varying in vec3 normal[3];",
+                "varying in vec4 position[3];",
+                "varying out vec3 normalout;",
+                "varying out vec4 positionout;"
+            ],
+            "op" : "normalout = normal[vindex];\n\tpositionout = position[vindex];"
+        },
+        "quad" : {
+            "op" : "edge.y = 100.;"
+        },
+        "quad-grid" : {
+            "op" : "if(mod(gl_PrimitiveIDIn,2) == 0) edge.x = 100.;\n\t\telse edge.z = 100.;"
+        }
     },
-    "gp-tex" : {
-        "decl" : "varying in vec2 texcoord0[3];\n\tvarying out vec2 TC;",
-        "op" : "TC = texcoord0[vindex];"
-    },
-    "gp-light" : {
-        "decl" : [
-            "varying in vec3 normal[3];",
-            "varying in vec4 position[3];",
-            "varying out vec3 normalout;",
-            "varying out vec4 positionout;"
-        ],
-        "op" : "normalout = normal[vindex];\n\tpositionout = position[vindex];"
-    },
-    "gp-quad" : {
-        "op" : "edge.y = 100.;"
-    },
-    "gp-quad-grid" : {
-        "op" : "if(mod(gl_PrimitiveIDIn,2) == 0) edge.x = 100.;\n\t\telse edge.z = 100.;"
-    },
-    "fp-discard" : {
-        "op" : "if(fEdgeIntensity<0.1) discard;"
-    },
-    "fp-tex-solid" : {
-        "decl" : "varying vec2 TC; \nuniform ${tex.sampler} tex;",
-        "op" : "vec4 texcolor= ${tex.sample}(tex,TC); \n\tsolidC = solidC * texcolor;"
-    },
-    "fp-tex-lines" : {
-        "decl" : "varying vec2 TC; \nuniform ${tex.sampler} tex;",
-        "op" : "vec4 texcolor= ${tex.sample}(tex,TC); \n\tlineC = lineC * texcolor;"
-    },
-    "fp-light" : {
-        "decl" : "varying vec3 normalout;\nvarying vec4 positionout;",
-        "pre" : [
-            "vec3 Vn = normalize(-vec3(positionout.xyz));",
-            "\tvec3 Nn = normalize(normalout);"
-        ],
-        "directional" : [
-            "vec3 lightToEye = -normalize(gl_LightSource[0].position.xyz);",
-            "\tfloat atten = 1.0;"
-        ],
-        "point" : [
-            "vec3 lightToEye = normalize(positionout.xyz - gl_LightSource[0].position.xyz);",
-            "\tfloat d = length(positionout.xyz-gl_LightSource[0].position.xyz);",
-            "\tfloat atten = gl_LightSource[0].constantAttenuation+gl_LightSource[0].linearAttenuation*d+gl_LightSource[0].quadraticAttenuation*d*d;",
-            "\tatten = 1.0/atten;"
-        ],
-        "spot" : [
-            "\tfloat spotatten = dot(lightToEye, normalize(gl_LightSource[0].spotDirection));",
-            "\tif(spotatten>gl_LightSource[0].spotCosCutoff) {",
-            "\t\tatten = atten*pow(spotatten, gl_LightSource[0].spotExponent);",
-            "\t}",
-            "\telse {",
-            "\t\tatten = 0.;",
-            "\t}"
-        ],
-        "post" : [
-            "vec4 ambient = gl_LightSource[0].ambient*atten;",
-            "\tvec4 diffuse = gl_LightSource[0].diffuse*atten;",
-            "\tvec4 specular = gl_LightSource[0].specular*atten;",
-            "\tvec3 Ln = normalize(-lightToEye);",
-            "\tfloat shininess = gl_FrontMaterial.shininess;",
-            "\tfloat mat_diffuse = lambertian(Nn, Ln);",
-            "\tfloat mat_specular = blinn(Vn, Nn, Ln, shininess);",
-            "\tvec4 mat_solid = vec4(0,0,0,0);",
-            "\tmat_solid += gl_FrontMaterial.emission;",
-            "\tmat_solid += gl_FrontMaterial.ambient*(ambient+gl_LightModel.ambient);",
-            "\tmat_solid += solidC*diffuse*mat_diffuse;",
-            "\tmat_solid += gl_FrontMaterial.specular*specular*mat_specular;",
-            "\tsolidC = mat_solid;",
-            "\tvec4 mat_line = vec4(0,0,0,0);",
-            "\tmat_line += line_color*(ambient+gl_LightModel.ambient);",
-            "\tmat_line += lineC*diffuse*mat_diffuse;",
-            "\tmat_line += line_color*specular*mat_specular;",
-            "\tlineC = mat_line;"
-        ]
-    },
-    "texture" : {
-        "sampler" : "sampler2D",
-        "sample" : "texture2D"
-    },
-    "texture-rect" : {
-        "sampler" : "sampler2DRect",
-        "sample" : "texture2DRect"
+    "fp" : {
+        "discard" : {
+            "op" : "if(fEdgeIntensity<0.1) discard;"
+        },
+        "tex-solid" : {
+            "decl" : "varying vec2 TC; \nuniform ${tex.sampler} tex;",
+            "op" : "vec4 texcolor= ${tex.sample}(tex,TC); \n\tsolidC = solidC * texcolor;"
+        },
+        "tex-lines" : {
+            "decl" : "varying vec2 TC; \nuniform ${tex.sampler} tex;",
+            "op" : "vec4 texcolor= ${tex.sample}(tex,TC); \n\tlineC = lineC * texcolor;"
+        },
+        "light" : {
+            "decl" : "varying vec3 normalout;\nvarying vec4 positionout;",
+            "pre" : [
+                "vec3 Vn = normalize(-vec3(positionout.xyz));",
+                "\tvec3 Nn = normalize(normalout);"
+            ],
+            "directional" : [
+                "vec3 lightToEye = -normalize(gl_LightSource[0].position.xyz);",
+                "\tfloat atten = 1.0;"
+            ],
+            "point" : [
+                "vec3 lightToEye = normalize(positionout.xyz - gl_LightSource[0].position.xyz);",
+                "\tfloat d = length(positionout.xyz-gl_LightSource[0].position.xyz);",
+                "\tfloat atten = gl_LightSource[0].constantAttenuation+gl_LightSource[0].linearAttenuation*d+gl_LightSource[0].quadraticAttenuation*d*d;",
+                "\tatten = 1.0/atten;"
+            ],
+            "spot" : [
+                "\tfloat spotatten = dot(lightToEye, normalize(gl_LightSource[0].spotDirection));",
+                "\tif(spotatten>gl_LightSource[0].spotCosCutoff) {",
+                "\t\tatten = atten*pow(spotatten, gl_LightSource[0].spotExponent);",
+                "\t}",
+                "\telse {",
+                "\t\tatten = 0.;",
+                "\t}"
+            ],
+            "post" : [
+                "vec4 ambient = gl_LightSource[0].ambient*atten;",
+                "\tvec4 diffuse = gl_LightSource[0].diffuse*atten;",
+                "\tvec4 specular = gl_LightSource[0].specular*atten;",
+                "\tvec3 Ln = normalize(-lightToEye);",
+                "\tfloat shininess = gl_FrontMaterial.shininess;",
+                "\tfloat mat_diffuse = lambertian(Nn, Ln);",
+                "\tfloat mat_specular = blinn(Vn, Nn, Ln, shininess);",
+                "\tvec4 mat_solid = vec4(0,0,0,0);",
+                "\tmat_solid += gl_FrontMaterial.emission;",
+                "\tmat_solid += gl_FrontMaterial.ambient*(ambient+gl_LightModel.ambient);",
+                "\tmat_solid += solidC*diffuse*mat_diffuse;",
+                "\tmat_solid += gl_FrontMaterial.specular*specular*mat_specular;",
+                "\tsolidC = mat_solid;",
+                "\tvec4 mat_line = vec4(0,0,0,0);",
+                "\tmat_line += line_color*(ambient+gl_LightModel.ambient);",
+                "\tmat_line += lineC*diffuse*mat_diffuse;",
+                "\tmat_line += line_color*specular*mat_specular;",
+                "\tlineC = mat_line;"
+            ]
+        },
+        "texture" : {
+            "sampler" : "sampler2D",
+            "sample" : "texture2D"
+        },
+        "texture-rect" : {
+            "sampler" : "sampler2DRect",
+            "sample" : "texture2DRect"
+        }
     }
 }}

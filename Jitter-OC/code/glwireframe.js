@@ -1,28 +1,16 @@
-outlets=2;
 include("String.prototype.template");
 
-var curob;
-var testname;
-var vname;
-var path_to_code_folder;
-
-// object properties
-var isgrid=true;
-var hastex=false;
-var lighting=false;
-var texrect=true;
-
 // build options
-var overlay=0;
 var texture_lines=0;
 var quad=0;
 var discard=0;
 var light_type="directional";
-declareattribute("overlay",null,"setoverlay",0);
+var texture_rect=-1;
 declareattribute("texture_lines",null,"settexture_lines",0);
 declareattribute("quad",null,"setquad",0);
 declareattribute("discard",null,"setdiscard",0);
 declareattribute("light_type",null,"setlight_type",0);
+declareattribute("texture_rect",null,"settexture_rect",0);
 	
 // shader attributes
 var line_color = [1.,0.,0.,1.];
@@ -30,45 +18,23 @@ var line_width=1.;
 declareattribute("line_color",null,"setline_color",0);
 declareattribute("line_width",null,"setline_width",0);
 
-var debug = 1;
+// object properties
+var isgrid=true;
+var hastex=false;
+var lighting=false;
+var texrect=true;
+
+var debug = 0;
 
 var shaderob = new JitterObject("jit.gl.shader");
 
 var p = new File(this.patcher.filepath,"read");
-path_to_code_folder = p.foldername+"/../code/";
+var path_to_code_folder = p.foldername+"/../code/";
 
-function testjson()
-{
-	//var d = new Dict();
-	//d.import_json("shader-parts.json");
-	//var str = d.stringify();				// convert dict to string
-	//var json = JSON.parse(str);				// parse the string as a JS Object
-	//var params = json["jxs-parts"]["param"]["common"];
-	//post(params[0]+"\n");
-	//post('test1 ${1 + 2} test2 ${3 + 4}'.template());		
-	//post(greetings({name:'Andrea'}));
-	var json = getjson()["wireframe-glsl"];
-	post(applytemplate_vp("gm.wireframe.vp.glsl", json["vp-tex"], json["vp-light"]));
-	post(applytemplate_gp("gm.wireframe.gp.glsl", json["gp-tex"], json["gp-light"], json["gp-quad"]));	
-	post(applytemplate_fp("gm.wireframe.fp.glsl", 0, get_light_glsl(json["fp-light"]), 0));	
-	//post(applytemplate_quad(gps, json["wireframe-glsl"]["gp-quad"]));
-	//post(applytemplate_tex(json["wireframe-glsl"]["vp-tex"], "gm.wireframe.vp.glsl"));
-	//post(applytemplate_tex(0, "gm.wireframe.vp.glsl"));
-}
-
-function postln(arg) {
-	if(debug)
-		post(arg+"\n");
-}
-
-function printd(d) {
-	if(typeof d === 'string')
-		postln(d);
-	else {
-		for (var key in d)
-			postln("key: "+key+". value: "+d[key]);
-	}
-}
+var vpglsl = "gm.wireframe.vp.glsl";
+var gpglsl = "gm.wireframe.gp.glsl";
+var fpglsl = "gm.wireframe.fp.glsl";
+var shaderjson = "shader-parts.json";
 
 function bang() {
 	reset();
@@ -82,37 +48,43 @@ function reset() {
 	texrect=true;
 }
 
+//////////////////////////////////////////////
+// write shader
+//////////////////////////////////////////////
+
 function build_shader(ob) {	
-	isgrid = !(ob.maxclass === "jit.gl.model");
 	
-	outlet(0,"getlighting_enable");	
 	if(ob.maxclass === "jit.gl.model") {
 		texrect = false;
-		//outlet(0, "material_mode", 0);
+		isgrid = false;
 		outlet(0, "gettexnames");
 	}
+	else if(ob.maxclass === "jit.gl.gridshape") {
+		outlet(0, "gridmode", 1);
+	}
+	else if(ob.maxclass === "jit.gl.mesh") {
+		outlet(0, "getdraw_mode");
+	}
 	outlet(0, "gettexture");	
+	outlet(0,"getlighting_enable");	
 	
+	if(texture_rect>=0)	// override on user request
+		texrect = texture_rect;
+		
 	var	jxsname = build_shader_name();
 	var fullpath = path_to_code_folder+jxsname;
 	var f = new File(fullpath);
-	if (f.isopen) {
+	if (f.isopen)
 		f.close();
-		//postln("deleting "+fullpath);
-		//outlet(1, "rm", fullpath);
-		//return;
-	}
-	else {
+	else
 		write_jxs(fullpath);
-	}
-	shaderob.read(fullpath);
 	
+	shaderob.read(fullpath);
 	outlet(0, "getdrawto");	
 }
 
 function build_shader_name() {
 	var jxsname = "wireframe";
-	if(overlay) jxsname+="_overlay";
 	if(hastex) {
 		jxsname+="_texture";
 		if(texrect)jxsname+="_rect";
@@ -128,41 +100,10 @@ function build_shader_name() {
 
 function getjson(){
 	var d = new Dict();
-	d.import_json("shader-parts.json");
+	d.import_json(shaderjson);
 	var str = d.stringify();				// convert dict to string
 	var json = JSON.parse(str);				// parse the string as a JS Object
 	return json;
-}
-
-function mergejson(d1, d2) {
-	for (var attrname in d2) { d1[attrname] = d2[attrname]; }
-}
-
-function fixtemplate(s) {
-	return s.replace(/\s*undefined/g, "\n").replace(/([;{}]),/g, "$1\n");
-}
-
-function applytemplate_vp(file, tex, light) {
-	postln("applying vp template to "+path_to_code_folder+file);
-	var f = new File(path_to_code_folder+file,"read");
-	return fixtemplate(f.readtext().template({tex:tex, light:light}));
-}
-
-function applytemplate_gp(file, tex, light, quad) {
-	postln("applying gp template to "+path_to_code_folder+file);
-	var f = new File(path_to_code_folder+file,"read");
-	return fixtemplate(f.readtext().template({tex:tex, light:light, quad:quad}));
-}
-
-function applytemplate_fp(file, tex, light, discard) {
-	postln("applying fp template to "+path_to_code_folder+file);
-	var f = new File(path_to_code_folder+file,"read");
-	return fixtemplate(f.readtext().template({tex:tex, light:light, discard:discard}));
-}
-
-function applytemplate_sampler(s, tex) {
-	postln("applying sampler template on string "+s);
-	return(s.template({tex : tex}));
 }
 
 function writelines(f, lines) {
@@ -215,40 +156,7 @@ function write_jxs(s) {
 		if(hastex)
 			writelines(f, jxs["bind"]["texture"]);
 		
-		var glsl = json["wireframe-glsl"];
-		
-		// vertex program
-		open_program_jxs(f, jxs["program"]["vp"]);	
-		f.writestring(applytemplate_vp(
-			"gm.wireframe.vp.glsl",
-			(hastex ? glsl["vp-tex"] : 0), 
-			(lighting ? glsl["vp-light"] : 0)
-		));
-		close_program_jxs(f);
-		
-		// geometry program
-		if(!isgrid)	open_program_jxs(f, jxs["program"]["gp-triangles"]);
-		else open_program_jxs(f, jxs["program"]["gp-trigrid"]);
-		f.writestring(applytemplate_gp(
-			"gm.wireframe.gp.glsl",
-			(hastex ? glsl["gp-tex"] : 0), 
-			(lighting ? glsl["gp-light"] : 0), 
-			(quad ? (isgrid ? glsl["gp-quad-grid"] : glsl["gp-quad"]) : 0)
-		));
-		close_program_jxs(f);
-		
-		// fragment program
-		open_program_jxs(f, jxs["program"]["fp"]);
-		f.writestring(applytemplate_sampler(
-			applytemplate_fp(
-				"gm.wireframe.fp.glsl",
-				(hastex ? (texture_lines ? glsl["fp-tex-lines"] : glsl["fp-tex-solid"]) : 0), 
-				(lighting ? get_light_glsl(glsl["fp-light"]) : 0),
-				(discard ? glsl["fp-discard"] : 0)
-			), 
-			(texrect ? glsl["texture-rect"] : glsl["texture"])
-		));
-		close_program_jxs(f);
+		write_programs(f, jxs, json);
 		
 		f.writestring("</language>\n");
 		f.writestring("</jittershader>\n");
@@ -259,14 +167,105 @@ function write_jxs(s) {
 	}
 }
 
+function write_programs(f, jxs, json) {
+	// vertex program
+	var glsl = json["wireframe-glsl"]["vp"];
+	open_program_jxs(f, jxs["program"]["vp"]);	
+	f.writestring(applytemplate_vp(vpglsl,
+		(hastex ? glsl["tex"] : 0), 
+		(lighting ? glsl["light"] : 0)
+	));
+	close_program_jxs(f);
+	
+	// geometry program
+	glsl = json["wireframe-glsl"]["gp"];
+	if(!isgrid)	open_program_jxs(f, jxs["program"]["gp-triangles"]);
+	else open_program_jxs(f, jxs["program"]["gp-trigrid"]);
+	f.writestring(applytemplate_gp(gpglsl,
+		(hastex ? glsl["tex"] : 0), 
+		(lighting ? glsl["light"] : 0), 
+		(quad ? (isgrid ? glsl["quad-grid"] : glsl["quad"]) : 0)
+	));
+	close_program_jxs(f);
+	
+	// fragment program
+	glsl = json["wireframe-glsl"]["fp"];
+	open_program_jxs(f, jxs["program"]["fp"]);
+	f.writestring(applytemplate_sampler(
+		applytemplate_fp(fpglsl,
+			(hastex ? (texture_lines ? glsl["tex-lines"] : glsl["tex-solid"]) : 0), 
+			(lighting ? get_light_glsl(glsl["light"]) : 0),
+			(discard ? glsl["discard"] : 0)
+		), 
+		(texrect ? glsl["texture-rect"] : glsl["texture"])
+	));
+	close_program_jxs(f);	
+}
+
+//////////////////////////////////////////////
+// string template
+//////////////////////////////////////////////
+
+function fixtemplate(s) {
+	return s.replace(/\s*undefined/g, "\n").replace(/([;{}]),/g, "$1\n");
+}
+
+function applytemplate_vp(file, tex, light) {
+	postln("applying vp template to "+path_to_code_folder+file);
+	var f = new File(path_to_code_folder+file,"read");
+	return fixtemplate(f.readtext().template({tex:tex, light:light}));
+}
+
+function applytemplate_gp(file, tex, light, quad) {
+	postln("applying gp template to "+path_to_code_folder+file);
+	var f = new File(path_to_code_folder+file,"read");
+	return fixtemplate(f.readtext().template({tex:tex, light:light, quad:quad}));
+}
+
+function applytemplate_fp(file, tex, light, discard) {
+	postln("applying fp template to "+path_to_code_folder+file);
+	var f = new File(path_to_code_folder+file,"read");
+	return fixtemplate(f.readtext().template({tex:tex, light:light, discard:discard}));
+}
+
+function applytemplate_sampler(s, tex) {
+	postln("applying sampler template on string "+s);
+	return(s.template({tex : tex}));
+}
+
+//////////////////////////////////////////////
+// utility
+//////////////////////////////////////////////
+
+function testjson()
+{
+	var json = getjson()["wireframe-glsl"];
+	post(applytemplate_vp(vpglsl, json["vp"]["tex"], json["vp"]["light"]));
+	post(applytemplate_gp(gpglsl, json["gp"]["tex"], json["gp"]["light"], json["gp"]["quad"]));	
+	post(applytemplate_fp(fpglsl, 0, get_light_glsl(json["fp"]["light"]), 0));	
+}
+
+function postln(arg) {
+	if(debug)
+		post(arg+"\n");
+}
+
+function printd(d) {
+	if(typeof d === 'string')
+		postln(d);
+	else {
+		for (var key in d)
+			postln("key: "+key+". value: "+d[key]);
+	}
+}
+
+function mergedict(d1, d2) {
+	for (var attrname in d2) { d1[attrname] = d2[attrname]; }
+}
+
 //////////////////////////////////////////////
 // build options
 //////////////////////////////////////////////
-
-function setoverlay(arg) {
-	overlay = (arg);
-	bang();
-}
 
 function settexture_lines(arg) {
 	texture_lines = (arg);
@@ -285,6 +284,11 @@ function setdiscard(arg) {
 
 function setlight_type(arg) {
 	light_type = (arg);
+	bang();
+}
+
+function settexture_rect(arg) {
+	texture_rect = (arg);
 	bang();
 }
 
@@ -323,6 +327,13 @@ function name(n) {
 	vname = n+"_vname";
 	outlet(0,"sendbox", "varname", vname);
 	build_shader(this.patcher.getnamed(vname));
+}
+
+function draw_mode(arg) {
+	if(arg==="triangles")
+		isgrid = 0;
+	else
+		outlet(0,"draw_mode", "tri_grid");
 }
 
 function lighting_enable(arg) {
