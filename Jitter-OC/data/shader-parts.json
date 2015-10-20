@@ -54,6 +54,9 @@
     "gp-quad-grid" : {
         "op" : "if(mod(gl_PrimitiveIDIn,2) == 0) edge.x = 100.;\n\t\telse edge.z = 100.;"
     },
+    "fp-discard" : {
+        "op" : "if(fEdgeIntensity<0.1) discard;"
+    },
     "fp-tex-solid" : {
         "decl" : "varying vec2 TC; \nuniform ${tex.sampler} tex;",
         "op" : "vec4 texcolor= ${tex.sample}(tex,TC); \n\tsolidC = solidC * texcolor;"
@@ -83,12 +86,12 @@
             "\tmat_solid += gl_FrontMaterial.ambient*(ambient+gl_LightModel.ambient);",
             "\tmat_solid += solidC*diffuse*mat_diffuse;",
             "\tmat_solid += gl_FrontMaterial.specular*specular*mat_specular;",
-            "\tsolidC = mat_solid",
+            "\tsolidC = mat_solid;",
             "\tvec4 mat_line = vec4(0,0,0,0);",
             "\tmat_line += line_color*(ambient+gl_LightModel.ambient);",
             "\tmat_line += lineC*diffuse*mat_diffuse;",
             "\tmat_line += line_color*specular*mat_specular;",
-            "\tlineC = mat_line"
+            "\tlineC = mat_line;"
         ]
     },
     "texture" : {

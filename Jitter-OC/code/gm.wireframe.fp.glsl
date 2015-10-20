@@ -23,7 +23,10 @@ void main (void)
     // determine frag distance to closest edge
     float fNearest = min(min(dist_vec[0],dist_vec[1]),dist_vec[2]);
     float fEdgeIntensity = exp2(-(1.0/line_width)*fNearest*fNearest);
-    vec4 solidC = gl_Color;
+
+    ${discard.op}
+
+    vec4 solidC = gl_FrontMaterial.diffuse;
     vec4 lineC = line_color;
 
     ${tex.op}
