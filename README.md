@@ -1,2 +1,2 @@
-# jit.gl.wireframe
-A Jitter OpenGL wireframe renderer
+# jitter-packages
+A place to put some jitter packages
