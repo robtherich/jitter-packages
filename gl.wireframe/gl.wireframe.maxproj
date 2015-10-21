@@ -1,9 +1,9 @@
 {
-	"name" : "Jitter-OC",
+	"name" : "gl.wireframe",
 	"version" : 1,
-	"creationdate" : -767888102,
-	"modificationdate" : -767111970,
-	"viewrect" : [ 31.0, 225.0, 330.0, 518.0 ],
+	"creationdate" : -766754727,
+	"modificationdate" : -766754712,
+	"viewrect" : [ 25.0, 70.0, 300.0, 500.0 ],
 	"autoorganize" : 1,
 	"hideprojectwindow" : 0,
 	"showdependencies" : 1,
@@ -19,33 +19,13 @@
 		}
 ,
 		"code" : 		{
-			"build_shader.js" : 			{
-				"kind" : "javascript",
-				"local" : 1
-			}
-,
 			"glwireframe.js" : 			{
 				"kind" : "javascript",
 				"local" : 1
 			}
 ,
-			"buildindex.js" : 			{
-				"kind" : "javascript",
-				"local" : 1
-			}
-,
-			"gm.wireframe.jxs" : 			{
-				"kind" : "shader",
-				"local" : 1
-			}
-,
 			"gm.wireframe.fp.glsl" : 			{
 				"kind" : "shader",
-				"local" : 1
-			}
-,
-			"String.prototype.template.js" : 			{
-				"kind" : "javascript",
 				"local" : 1
 			}
 ,
@@ -58,6 +38,11 @@
 				"kind" : "shader",
 				"local" : 1
 			}
+,
+			"String.prototype.template.js" : 			{
+				"kind" : "javascript",
+				"local" : 1
+			}
 
 		}
 ,
@@ -66,10 +51,6 @@
 				"kind" : "json",
 				"local" : 1
 			}
-
-		}
-,
-		"externals" : 		{
 
 		}
 
@@ -83,7 +64,7 @@
 
 	}
 ,
-	"detailsvisible" : 1,
+	"detailsvisible" : 0,
 	"amxdtype" : 1633771873,
 	"readonly" : 0,
 	"devpathtype" : 0,
