@@ -6,17 +6,29 @@ var quad=0;
 var discard=0;
 var light_type="directional";
 var texture_rect=-1;
-declareattribute("texture_lines",null,"settexture_lines",0);
-declareattribute("quad",null,"setquad",0);
-declareattribute("discard",null,"setdiscard",0);
-declareattribute("light_type",null,"setlight_type",0);
-declareattribute("texture_rect",null,"settexture_rect",0);
+var depthfade_width=0;
+var depthfade_alpha=0;
+var depthfade_color=0;
+declareattribute("texture_lines",null,"settexture_lines",1);
+declareattribute("quad",null,"setquad",1);
+declareattribute("discard",null,"setdiscard",1);
+declareattribute("light_type",null,"setlight_type",1);
+declareattribute("texture_rect",null,"settexture_rect",1);
+declareattribute("depthfade_width",null,"setdepthfade_width",1);
+declareattribute("depthfade_alpha",null,"setdepthfade_alpha",1);
+declareattribute("depthfade_color",null,"setdepthfade_color",1);
 	
 // shader attributes
 var line_color = [1.,0.,0.,1.];
 var line_width=1.;
-declareattribute("line_color",null,"setline_color",0);
-declareattribute("line_width",null,"setline_width",0);
+var fade_color = [0.,0.,0.,1.];
+var fade_distance=50.;
+var fade_width=1.;
+declareattribute("line_color",null,"setline_color",1);
+declareattribute("line_width",null,"setline_width",1);
+declareattribute("fade_color",null,"setfade_color",1);
+declareattribute("fade_distance",null,"setfade_distance",1);
+declareattribute("fade_width",null,"setfade_width",1);
 
 // object properties
 var isgrid=true;
@@ -24,7 +36,8 @@ var hastex=false;
 var lighting=false;
 var texrect=true;
 
-var debug = 0;
+var dofade = false;
+var verbose = false;
 
 var shaderob = new JitterObject("jit.gl.shader");
 
@@ -46,6 +59,10 @@ function reset() {
 	hastex=false;
 	lighting=false;
 	texrect=true;
+}
+
+function notifydeleted() {
+	shaderob.freepeer();
 }
 
 //////////////////////////////////////////////
@@ -86,15 +103,18 @@ function build_shader(ob) {
 function build_shader_name() {
 	var jxsname = "wireframe";
 	if(hastex) {
-		jxsname+="_texture";
+		jxsname+="_tex";
 		if(texrect)jxsname+="_rect";
 	}
 	if(texture_lines) jxsname+="_texlines";
 	if(lighting) jxsname+="_"+light_type;
-	if(!isgrid) jxsname+="_triangles";
+	if(!isgrid) jxsname+="_tri";
 	else jxsname+="_trigrid";
 	if(quad)jxsname+="_quad";
 	if(discard)jxsname+="_discard";
+	if(depthfade_width) jxsname+="_fw";
+	if(depthfade_alpha) jxsname+="_fa";
+	if(depthfade_color) jxsname+="_fc";
 	return jxsname+".jxs"
 }
 
@@ -104,11 +124,6 @@ function getjson(){
 	var str = d.stringify();				// convert dict to string
 	var json = JSON.parse(str);				// parse the string as a JS Object
 	return json;
-}
-
-function writelines(f, lines) {
-	for (l in lines)
-		f.writestring(lines[l]+"\n");
 }
 
 function open_program_jxs(f, s) {
@@ -135,6 +150,36 @@ function get_light_glsl(json) {
 	return rdict;
 }
 
+function get_fade_glsl(json) {
+	var rdict=new Object();
+	rdict["decl"] = json["decl"];
+	rdict["op"] = json["op"];
+
+	if(depthfade_width) {
+		rdict["decl"] += ("\n"+json["width"]["decl"]);
+		rdict["width"] = json["width"]["op"];
+	}
+	if(depthfade_color) {
+		rdict["decl"] += ("\n"+json["color"]["decl"]);
+		rdict["color"] = json["color"]["op"];
+		if(depthfade_alpha) 
+			rdict["color"] += ("\n\t"+json["alpha"]["op"]);
+	}
+	else if(depthfade_alpha)
+		rdict["color"] = json["alpha"]["op"];
+		
+	if(!lighting)
+		rdict["decl"] += ("\n"+json["decl-nolighting"]);		
+		
+	return rdict;
+}
+
+function write_fade_jxs(f,json) {
+	writelines(f, json["fade-distance"]);
+	if(depthfade_width) writelines(f, json["fade-width"]);
+	if(depthfade_color) writelines(f, json["fade-color"]);
+}
+
 function write_jxs(s) {
 	var f = new File(s,"write","TEXT"); 
 	var json = getjson();
@@ -149,12 +194,16 @@ function write_jxs(s) {
 		writelines(f, jxs["param"]["common"]);
 		if(hastex)
 			writelines(f, jxs["param"]["texture"]);
+		if(dofade)
+			write_fade_jxs(f, jxs["param"]);
 			
 		f.writestring("<language name=\"glsl\" version=\"1.2\">\n");
 			
 		writelines(f, jxs["bind"]["common"]);
 		if(hastex)
 			writelines(f, jxs["bind"]["texture"]);
+		if(dofade)
+			write_fade_jxs(f, jxs["bind"]);			
 		
 		write_programs(f, jxs, json);
 		
@@ -173,7 +222,7 @@ function write_programs(f, jxs, json) {
 	open_program_jxs(f, jxs["program"]["vp"]);	
 	f.writestring(applytemplate_vp(vpglsl,
 		(hastex ? glsl["tex"] : 0), 
-		(lighting ? glsl["light"] : 0)
+		(lighting||dofade ? glsl["light"] : 0)
 	));
 	close_program_jxs(f);
 	
@@ -183,7 +232,7 @@ function write_programs(f, jxs, json) {
 	else open_program_jxs(f, jxs["program"]["gp-trigrid"]);
 	f.writestring(applytemplate_gp(gpglsl,
 		(hastex ? glsl["tex"] : 0), 
-		(lighting ? glsl["light"] : 0), 
+		(lighting||dofade ? glsl["light"] : 0), 
 		(quad ? (isgrid ? glsl["quad-grid"] : glsl["quad"]) : 0)
 	));
 	close_program_jxs(f);
@@ -195,7 +244,8 @@ function write_programs(f, jxs, json) {
 		applytemplate_fp(fpglsl,
 			(hastex ? (texture_lines ? glsl["tex-lines"] : glsl["tex-solid"]) : 0), 
 			(lighting ? get_light_glsl(glsl["light"]) : 0),
-			(discard ? glsl["discard"] : 0)
+			(discard ? glsl["discard"] : 0),
+			(dofade ? get_fade_glsl(glsl["fade-depth"]) : 0)
 		), 
 		(texrect ? glsl["texture-rect"] : glsl["texture"])
 	));
@@ -222,10 +272,10 @@ function applytemplate_gp(file, tex, light, quad) {
 	return fixtemplate(f.readtext().template({tex:tex, light:light, quad:quad}));
 }
 
-function applytemplate_fp(file, tex, light, discard) {
+function applytemplate_fp(file, tex, light, discard, depthfade) {
 	postln("applying fp template to "+path_to_code_folder+file);
 	var f = new File(path_to_code_folder+file,"read");
-	return fixtemplate(f.readtext().template({tex:tex, light:light, discard:discard}));
+	return fixtemplate(f.readtext().template({tex:tex, light:light, discard:discard, depthfade:depthfade}));
 }
 
 function applytemplate_sampler(s, tex) {
@@ -242,17 +292,27 @@ function testjson()
 	var json = getjson()["wireframe-glsl"];
 	post(applytemplate_vp(vpglsl, json["vp"]["tex"], json["vp"]["light"]));
 	post(applytemplate_gp(gpglsl, json["gp"]["tex"], json["gp"]["light"], json["gp"]["quad"]));	
-	post(applytemplate_fp(fpglsl, 0, get_light_glsl(json["fp"]["light"]), 0));	
+	post(applytemplate_fp(fpglsl, 0, get_light_glsl(json["fp"]["light"]), 0,get_fade_glsl(json["fp"]["fade-depth"])));	
+}
+
+function writelines(f, lines) {
+	if(typeof lines === 'string') {
+		postln("writing line "+lines);
+		f.writestring(lines+"\n");
+	}
+    else {
+	    for (l in lines) {postln("writing line "+lines[l]); f.writestring(lines[l]+"\n");}
+    }
 }
 
 function postln(arg) {
-	if(debug)
+	if(verbose)
 		post(arg+"\n");
 }
 
 function printd(d) {
 	if(typeof d === 'string')
-		postln(d);
+		postln("string: "+d);
 	else {
 		for (var key in d)
 			postln("key: "+key+". value: "+d[key]);
@@ -292,6 +352,29 @@ function settexture_rect(arg) {
 	bang();
 }
 
+function setdepthfade_width(arg) {	
+	depthfade_width = (arg);
+	setdofade(arg);
+	bang();
+}
+
+function setdepthfade_alpha(arg) {
+	depthfade_alpha = (arg);
+	setdofade(arg);	
+	bang();
+}
+
+function setdepthfade_color(arg) {
+	depthfade_color = (arg);
+	setdofade(arg);
+	bang();
+}
+
+function setdofade(arg) {
+	if(arg) dofade = true;
+	else dofade = (depthfade_width||depthfade_alpha||depthfade_color);
+}
+
 //////////////////////////////////////////////
 // shader attributes
 //////////////////////////////////////////////
@@ -299,6 +382,11 @@ function settexture_rect(arg) {
 function resend_shader_params() {
 	shaderob.param(["line_width"].concat([line_width]));
 	shaderob.param(["line_color"].concat(line_color));
+	if(dofade) {
+		shaderob.param(["fade_distance"].concat([fade_distance]));
+		if(fade_color) shaderob.param(["fade_color"].concat(fade_color));
+		if(fade_width) shaderob.param(["fade_width"].concat([fade_width]));
+	}
 }
 
 function do_shader_param(a) {
@@ -308,7 +396,7 @@ function do_shader_param(a) {
 
 function setline_color() {
 	var a = arrayfromargs(messagename,arguments);
-	for(i=1; i<a.length; i++) line_color[i-1]=a[i];
+	for(i=1; i<a.length&&i<=4; i++) line_color[i-1]=a[i];
 	do_shader_param(a);
 }
 
@@ -316,6 +404,28 @@ function setline_width() {
 	var a = arrayfromargs(messagename,arguments);
 	if(a.length>1) {
 		line_width = a[1];
+		do_shader_param(a);
+	}
+}
+
+function setfade_color() {
+	var a = arrayfromargs(messagename,arguments);
+	for(i=1; i<a.length&&i<=4; i++) fade_color[i-1]=a[i];
+	do_shader_param(a);
+}
+
+function setfade_width() {
+	var a = arrayfromargs(messagename,arguments);
+	if(a.length>1) {
+		fade_width = a[1];
+		do_shader_param(a);
+	}
+}
+
+function setfade_distance() {
+	var a = arrayfromargs(messagename,arguments);
+	if(a.length>1) {
+		fade_distance = a[1];
 		do_shader_param(a);
 	}
 }

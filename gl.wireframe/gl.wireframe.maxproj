@@ -1,10 +1,10 @@
 {
 	"name" : "gl.wireframe",
 	"version" : 1,
-	"creationdate" : -766754727,
-	"modificationdate" : -766754712,
+	"creationdate" : -766754848,
+	"modificationdate" : 3528279548,
 	"viewrect" : [ 25.0, 70.0, 300.0, 500.0 ],
-	"autoorganize" : 1,
+	"autoorganize" : 0,
 	"hideprojectwindow" : 0,
 	"showdependencies" : 1,
 	"autolocalize" : 0,
@@ -12,8 +12,12 @@
 		"patchers" : 		{
 			"Wireframe.maxpat" : 			{
 				"kind" : "patcher",
-				"local" : 1,
-				"toplevel" : 1
+				"local" : 1
+			}
+,
+			"glwireframe-help.maxpat" : 			{
+				"kind" : "patcher",
+				"local" : 1
 			}
 
 		}
@@ -64,7 +68,7 @@
 
 	}
 ,
-	"detailsvisible" : 0,
+	"detailsvisible" : 1,
 	"amxdtype" : 1633771873,
 	"readonly" : 0,
 	"devpathtype" : 0,

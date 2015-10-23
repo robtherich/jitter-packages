@@ -5,9 +5,10 @@
             "<param name=\"line_color\" type=\"vec4\" default=\"1 0 0 1\" />",
             "<param name=\"line_width\" type=\"float\" default=\"1.0\" />"
         ],
-        "texture" : [
-            "<param name=\"tex\" type=\"int\" default=\"0\" />"
-        ]
+        "texture" : "<param name=\"tex\" type=\"int\" default=\"0\" />",
+        "fade-distance" : "<param name=\"fade_distance\" type=\"float\" default=\"50\" />",
+        "fade-color" : "<param name=\"fade_color\" type=\"vec4\" default=\"0 0 0 1\" />",
+        "fade-width" : "<param name=\"fade_width\" type=\"float\" default=\"1.0\" />"
     },
     "bind" :  {
         "common" : [ 
@@ -15,9 +16,10 @@
             "<bind param=\"line_color\" program=\"fp\" />",
             "<bind param=\"line_width\" program=\"fp\" />"
         ],
-        "texture" : [
-            "<bind param=\"tex\" program=\"fp\" />"
-        ]
+        "texture" : "<bind param=\"tex\" program=\"fp\" />",
+        "fade-distance" : "<bind param=\"fade_distance\" program=\"fp\" />",
+        "fade-color" : "<bind param=\"fade_color\" program=\"fp\" />",
+        "fade-width" : "<bind param=\"fade_width\" program=\"fp\" />"
     },
     "program" : {
         "vp" : "<program name=\"vp\" type=\"vertex\">",
@@ -60,7 +62,7 @@
     },
     "fp" : {
         "discard" : {
-            "op" : "if(fEdgeIntensity<0.1) discard;"
+            "op" : "if(edgeIntensity<0.5) discard;"
         },
         "tex-solid" : {
             "decl" : "varying vec2 TC; \nuniform ${tex.sampler} tex;",
@@ -123,6 +125,22 @@
         "texture-rect" : {
             "sampler" : "sampler2DRect",
             "sample" : "texture2DRect"
+        },
+        "fade-depth" : {
+            "decl" : "uniform float fade_distance;",
+            "decl-nolighting" : "varying vec3 normalout;\nvarying vec4 positionout;",
+            "op" : "float depthfade = 1. - (clamp(length(positionout.xyz), 0, fade_distance)/fade_distance);",
+            "width" : {
+                "decl" : "uniform float fade_width;",
+                "op" : "lw = clamp(line_width*depthfade,fade_width, line_width);"
+            },
+            "color" : {
+                "decl" : "uniform vec4 fade_color;",
+                "op" : "lineC = mix(fade_color, lineC, depthfade);"
+            },
+            "alpha" : {
+                "op" : "solidC.a = depthfade;\nlineC.a = depthfade;"
+            }
         }
     }
 }}
