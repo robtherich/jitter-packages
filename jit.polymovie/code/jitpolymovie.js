@@ -1,11 +1,14 @@
+autowatch=1;
 outlets=3;
 
 var drawto = "";
 var curmov=-1;
 var ispaused=true;
+var isstopped=false;
 var saveargs=true;
 var readcount = 0;
-var useseeknotify = 1;
+var useseeknotify = 0;
+var loopstate = 1;
 
 var filetypes_mac = ["MPEG", "mpg4","MooV"];
 var filetypes_win = ["WVC1","WMVA","WMV3","WMV2"];
@@ -45,15 +48,15 @@ function movcallback(event){
 		if(generatethumb) {
 			getmovie_name(event.subjectname).position = thumbpos;
 			movies[event.subjectname].thumb = null; // freepeer()?
-			if(!useseeknotify) 
-				movies[event.subjectname].thumb = getthumbnail(getmovie_name(event.subjectname));
+			//if(!useseeknotify) 
+			//	movies[event.subjectname].thumb = getthumbnail(getmovie_name(event.subjectname));
 		}
 		if(++readcount == movnames.length)
 			outlet(1, "readfolder", "done");
 	}
 	else if(event.eventname==="seeknotify") {
 		if(generatethumb && movies[event.subjectname].thumb === null) {
-			movies[event.subjectname].thumb = getthumbnail(getmovie_name(event.subjectname));
+			//movies[event.subjectname].thumb = getthumbnail(getmovie_name(event.subjectname));
 		}	 
 	}
 
@@ -125,15 +128,18 @@ function ismovie(t) {
 function initmovie(o) {
 	o.autostart=0;
 	o.automatic=0;
-	if(drawto==="")
+	if(drawto==="") {
+		postln("disable output_texture")
 		o.output_texture=0;
+	}
 	else {
+		postln("enable output_texture")
 		o.output_texture=1;
 		o.drawto=drawto;
 	}
 
-	if(o.engine=="qt")
-		useseeknotify = 0;
+	if(o.engine=="avf")
+		useseeknotify = 1;
 }
 
 function clear() {
@@ -195,13 +201,24 @@ function pause() {
 		getmovie_index(curmov).stop();	
 }
 
+function start() {
+	doplay();
+}
+
 function stop() {
 	pause();
+	isstopped = true;
+}
+
+function scrub(pos) {
+	ispaused = false;
+	getmovie_index(curmov).position = pos;
 }
 
 function doplay() {
 	getmovie_index(curmov).start();
-	postln("playing movie: "+curmov+" "+getmovie_index(curmov).moviefile);
+	ispaused = false;
+	isstopped = false;
 }
 
 function play() {
@@ -209,11 +226,20 @@ function play() {
 	if(arguments.length)
 		var i=arguments[0];
 		
-	if(i<movnames.length) {
-		stop();
+	if(i < movnames.length && i >= 0) {
+		pause()
 		curmov=i;
-		doplay();
-		ispaused=false;
+		postln("playing movie: "+curmov+" "+getmovie_index(curmov).moviefile);
+		if(!isstopped)
+			doplay();
+		getmovie_index(curmov).loop = loopstate;
+	}
+}
+
+function loop(state) {
+	loopstate = state;
+	if((m = getmovie_index(curmov))) {
+		m.loop = loopstate;
 	}
 }
 
@@ -272,11 +298,11 @@ function sendmovie(movie, mess, args) {
 	} 
 	else if(mess.search("get")==0) {
 		var attr=mess.substr(3, mess.length);
-		postln("getting attr "+attr);
+		//postln("getting attr "+attr);
 		outlet(1, attr, movie[attr]);
 	}
 	else {
-		postln("setting attr "+mess);
+		//postln("setting attr "+mess);
 		movie[mess] = args;	
 	}	
 }
