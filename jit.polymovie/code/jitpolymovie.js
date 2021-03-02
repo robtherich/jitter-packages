@@ -1,5 +1,8 @@
 autowatch=1;
 outlets=3;
+// outlet 0 = jit_matrix / jit_gl_texture
+// outlet 1 = movie attributes
+// outlet 2 = special messages
 
 var drawto = "";
 var curmov=-1;
@@ -11,15 +14,18 @@ var useseeknotify = 0;
 var loopstate = 1;
 
 var filetypes_mac = ["MPEG", "mpg4","MooV"];
-var filetypes_win = ["WVC1","WMVA","WMV3","WMV2"];
+//var filetypes_win = ["WVC1","WMVA","WMV3","WMV2"];
 var filetypes = filetypes_mac;
 
+var moviedict = new Dict();
 var movies = new Object();
 // "movie" : movie ob,
 // "index" : movie index,
 // "listener" : movie listener,
 // "thumb" : thumbnail matrix
 var movnames = new Array();
+var curmovob = null;
+var movct = 0;
 
 var savedargs = new Array();
 var dummymatrix = new JitterMatrix(4,"char",320,240);
@@ -48,15 +54,17 @@ function movcallback(event){
 		if(generatethumb) {
 			getmovie_name(event.subjectname).position = thumbpos;
 			movies[event.subjectname].thumb = null; // freepeer()?
-			//if(!useseeknotify) 
-			//	movies[event.subjectname].thumb = getthumbnail(getmovie_name(event.subjectname));
+			if(!useseeknotify) 
+				movies[event.subjectname].thumb = getthumbnail(getmovie_name(event.subjectname));
 		}
-		if(++readcount == movnames.length)
-			outlet(1, "readfolder", "done");
+		if(++readcount == movnames.length) {
+			outlet(2, "readfolder", "done", readcount);
+			outlet(2, "dictionary", moviedict.name);
+		}
 	}
 	else if(event.eventname==="seeknotify") {
 		if(generatethumb && movies[event.subjectname].thumb === null) {
-			//movies[event.subjectname].thumb = getthumbnail(getmovie_name(event.subjectname));
+			movies[event.subjectname].thumb = getthumbnail(getmovie_name(event.subjectname));
 		}	 
 	}
 
@@ -69,7 +77,12 @@ function bang() {
 }
 
 function drawmovie() {
-	var o = getmovie_index(curmov);
+	//var o = getmovie_index(curmov);
+	
+	if(!curmovob)
+		return;
+
+	var o = curmovob;
 	if(drawtexture()) {
 		o.matrixcalc(dummymatrix,dummymatrix);
 		outlet(0,outtex,o.texture_name);
@@ -82,6 +95,7 @@ function drawmovie() {
 		o.matrixcalc(dummymatrix,dummymatrix);
 		outlet(0,outmat,dummymatrix.name);
 	}
+	outlet(1, "position", o.position);
 }
 
 function drawtexture() {
@@ -151,39 +165,63 @@ function clear() {
 	movnames.splice(0,movnames.length);
 	movies = new Object();
 	thumbs.splice(0,thumbs.length);
+	curmovob = null;
+
+	moviedict.clear();
+	movct = 0;
+
+	outlet(2, "movielist", "clear");
 }
 
 function readfolder(arg) {
 	clear();
-	
+	appendfolder(arg);
+}
+
+function appendfolder(arg) {
 	var f = new Folder(arg);
 	var fpath = f.pathname;
 	var fcount = f.count;
-	var i=0;
-
 	f.reset();
+
 	while (!f.end) {
 		if(ismovie(f.filetype)) {
-			postln(fpath+f.filename);
-			var o = new JitterObject("jit.movie");
-			initmovie(o);
-			var rval = o.asyncread(fpath+f.filename);
-			if(rval[1]) addmovie(o, i++);				 
+			postln(fpath + f.filename);
+			addmovie(path);
 		}
 		f.next();
 	}
 	doargattrs();
 }
 
-function addmovie(o, i) {
-	var regname = o.getregisteredname();
-	movnames.push(regname);
-	movies[regname] = new Object();
-	movies[regname]["movie"] = o;
-	movies[regname]["index"] = i;
-	movies[regname]["listener"] = new JitterListener(regname,movcallback);
-	movies[regname]["thumb"] = null;
-	postmovinfo(movies[regname]);
+function appendmovie(path) {
+	addmovie(path)
+	doargattrs();
+}
+
+function addmovie(path) {
+	var o = new JitterObject("jit.movie");
+	initmovie(o);
+	var rval = o.asyncread(path);
+	if(rval[1]) {
+		var idx = movct++;
+		var regname = o.getregisteredname();
+		movnames.push(regname);
+		var m = new Object();
+		movies[regname] = m;
+		m.movie = o;
+		m.index = idx;
+		m.listener = new JitterListener(regname, movcallback);
+		m.thumb = null;
+
+		moviedict.setparse(idx, '{ "name" : "'+m.movie.moviename+'", "path" : "' + m.movie.moviepath + '"}' );
+		outlet(2, "movielist", "append", m.movie.moviename);
+
+		postmovinfo(movies[regname]);
+	}
+	else {
+		o.freepeer();
+	}
 }
 
 function postmovinfo(m) {
@@ -191,14 +229,82 @@ function postmovinfo(m) {
 	postln("name: "+m.movie.moviename);
 }
 
+function dictionary(dname) {
+	postln("reading dictionary " + dname);
+	var d = new Dict(dname);
+	clear();
+	var keys = d.getkeys();
+	
+	// convert single value to array
+	if(typeof(keys) === "string") {
+		keys = [keys];
+	}
+	keys.forEach(function (key, i) {
+		var m = d.get(key);
+		addmovie(m.get("path"));
+	});
+
+	// apply arg attrs first...
+	doargattrs();
+
+	// then apply dictionary attrs
+	keys.forEach(function (key, i) {
+		var m = d.get(key)
+		var attrs = m.get("attributes");
+		if(attrs) {
+			var akeys = attrs.getkeys();
+			var movie = getmovie_index(i);
+
+			// convert single value to array
+			if(typeof(akeys) === "string") {
+				akeys = [akeys];
+			}
+			akeys.forEach(function (akey, j) {
+				//postln("attribute: " + akey + ", vals: " + attrs.get(akey));
+				if(movie) {
+					sendmovie(movie, akey, attrs.get(akey));
+				}
+			});
+		}
+	});	
+}
+
+function writedict() {
+	if(arguments.length) {
+		moviedict.export_json(arguments[0]);
+	}
+	else {
+		moviedict.export_json();
+	}
+}
+
+function readdict() {
+	var d = new Dict();
+	if(arguments.length) {
+		d.import_json(arguments[0]);
+	}
+	else {
+		d.import_json();
+	}
+	dictionary(d.name);
+}
+
+function getdict() {
+	outlet(2, "dictionary", moviedict.name);
+}
+
 /////////////////////////////////////////////
 // #mark Playback
 /////////////////////////////////////////////
 
+function movieindexvalid(idx) {
+	return (idx < movnames.length && idx >= 0);
+}
+
 function pause() {
 	ispaused = true;
-	if(curmov >= 0)
-		getmovie_index(curmov).stop();	
+	if(curmovob)
+		curmovob.stop();	
 }
 
 function start() {
@@ -211,13 +317,17 @@ function stop() {
 }
 
 function scrub(pos) {
-	ispaused = false;
-	getmovie_index(curmov).position = pos;
+	if(curmovob) {
+		curmovob.position = pos;
+		ispaused = false;
+	}
 }
 
 function doplay() {
-	getmovie_index(curmov).start();
-	ispaused = false;
+	if(curmovob) {
+		curmovob.start();
+		ispaused = false;
+	}
 	isstopped = false;
 }
 
@@ -226,26 +336,27 @@ function play() {
 	if(arguments.length)
 		var i=arguments[0];
 		
-	if(i < movnames.length && i >= 0) {
+	if(movieindexvalid(i)) {
 		pause()
-		curmov=i;
-		postln("playing movie: "+curmov+" "+getmovie_index(curmov).moviefile);
+		curmov = i;
+		curmovob = getmovie_index(curmov);
+		postln("playing movie: " + curmov + " " + curmovob.moviefile);
 		if(!isstopped)
 			doplay();
-		getmovie_index(curmov).loop = loopstate;
-	}
-}
-
-function loop(state) {
-	loopstate = state;
-	if((m = getmovie_index(curmov))) {
-		m.loop = loopstate;
+		ispaused = false;
+		
+		curmovob.loop = loopstate;
+		var loopi = curmovob.looppoints_secs[0] / curmovob.seconds;
+		var loopo = curmovob.looppoints_secs[1] / curmovob.seconds;
+		outlet(1, "looppoints", loopi, loopo);
 	}
 }
 
 /////////////////////////////////////////////
 // #mark Args Attrs and Messages
 /////////////////////////////////////////////
+
+// from patcherargs
 function done() {
 	saveargs=false;
 }
@@ -274,9 +385,9 @@ function anything() {
 		var e = messagename+","+a.join();
 		savedargs.push(e);
 	}
-	if(curmov>=0) {
+	if(curmovob) {
 		var a = arrayfromargs(arguments);
-		sendmovie(getmovie_index(curmov),messagename, a);
+		sendmovie(curmovob, messagename, a);
 	}
 }
 
@@ -298,13 +409,38 @@ function sendmovie(movie, mess, args) {
 	} 
 	else if(mess.search("get")==0) {
 		var attr=mess.substr(3, mess.length);
-		//postln("getting attr "+attr);
+		postln("getting attr "+attr);
 		outlet(1, attr, movie[attr]);
 	}
 	else {
-		//postln("setting attr "+mess);
+		postln("setting attr "+mess);
 		movie[mess] = args;	
+		var regname = movie.getregisteredname();
+		var idx = movies[regname].index;
+		moviedict.replace(idx + "::attributes::"+mess, args);
 	}	
+}
+
+// special case handlers for position and loop attrs
+function position(p) {
+	if(curmovob) {
+		curmovob.position = p;
+	}
+}
+
+function loop(state) {
+	loopstate = state;
+	if(curmovob) {
+		curmovob.loop = loopstate;
+	}
+}
+
+function looppoints(loopi, loopo) {
+	if(curmovob) {
+		var loopsecin = (loopi < loopo ? loopi : loopo) * curmovob.seconds;
+		var loopsecout = (loopi < loopo ? loopo : loopi) * curmovob.seconds;
+		curmovob.looppoints_secs = [loopsecin, loopsecout];
+	}
 }
 
 /////////////////////////////////////////////
