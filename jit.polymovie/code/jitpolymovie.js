@@ -11,7 +11,7 @@ var isstopped=false;
 var saveargs=true;
 var readcount = 0;
 var useseeknotify = 0;
-var loopstate = 1;
+var loopmode = 1;
 
 var filetypes_mac = ["MPEG", "mpg4","MooV"];
 //var filetypes_win = ["WVC1","WMVA","WMV3","WMV2"];
@@ -22,7 +22,7 @@ var movies = new Object();
 // "movie" : movie ob,
 // "index" : movie index,
 // "listener" : movie listener,
-// "thumb" : thumbnail matrix
+
 var movnames = new Array();
 var curmovob = null;
 var movct = 0;
@@ -30,8 +30,6 @@ var movct = 0;
 var savedargs = new Array();
 var dummymatrix = new JitterMatrix(4,"char",320,240);
 var swaplisten=null;
-
-var thumbs = new Array();
 
 var outtex = "jit_gl_texture";
 var outmat = "jit_matrix";
@@ -51,21 +49,20 @@ function swapcallback(event){
 
 function movcallback(event){
 	if(event.eventname==="read") {
-		if(generatethumb) {
-			getmovie_name(event.subjectname).position = thumbpos;
-			movies[event.subjectname].thumb = null; // freepeer()?
-			if(!useseeknotify) 
-				movies[event.subjectname].thumb = getthumbnail(getmovie_name(event.subjectname));
-		}
+		post("callback: " + event.subjectname + " sent "+ event.eventname + " with (" + event.args + ")\n");
+
+		var m = movies[event.subjectname];
+		moviedict.setparse(m.index, '{ "name" : "'+m.movie.moviename+'", "path" : "' + m.movie.moviepath + '"}' );
+		outlet(2, "movielist", "append", m.movie.moviename);
+		postmovinfo(m);
+
 		if(++readcount == movnames.length) {
 			outlet(2, "readfolder", "done", readcount);
 			outlet(2, "dictionary", moviedict.name);
 		}
 	}
 	else if(event.eventname==="seeknotify") {
-		if(generatethumb && movies[event.subjectname].thumb === null) {
-			movies[event.subjectname].thumb = getthumbnail(getmovie_name(event.subjectname));
-		}	 
+	 
 	}
 
 	//post("callback: " + event.subjectname + " sent "+ event.eventname + " with (" + event.args + ")\n");		
@@ -137,23 +134,6 @@ function ismovie(t) {
 			return true;
 	}
 	return false;
-} 
-
-function initmovie(o) {
-	o.autostart=0;
-	o.automatic=0;
-	if(drawto==="") {
-		postln("disable output_texture")
-		o.output_texture=0;
-	}
-	else {
-		postln("enable output_texture")
-		o.output_texture=1;
-		o.drawto=drawto;
-	}
-
-	if(o.engine=="avf")
-		useseeknotify = 1;
 }
 
 function clear() {
@@ -164,7 +144,6 @@ function clear() {
 	}
 	movnames.splice(0,movnames.length);
 	movies = new Object();
-	thumbs.splice(0,thumbs.length);
 	curmovob = null;
 
 	moviedict.clear();
@@ -187,7 +166,7 @@ function appendfolder(arg) {
 	while (!f.end) {
 		if(ismovie(f.filetype)) {
 			postln(fpath + f.filename);
-			addmovie(path);
+			addmovie(fpath + f.filename);
 		}
 		f.next();
 	}
@@ -201,27 +180,32 @@ function appendmovie(path) {
 
 function addmovie(path) {
 	var o = new JitterObject("jit.movie");
-	initmovie(o);
-	var rval = o.asyncread(path);
-	if(rval[1]) {
-		var idx = movct++;
-		var regname = o.getregisteredname();
-		movnames.push(regname);
-		var m = new Object();
-		movies[regname] = m;
-		m.movie = o;
-		m.index = idx;
-		m.listener = new JitterListener(regname, movcallback);
-		m.thumb = null;
-
-		moviedict.setparse(idx, '{ "name" : "'+m.movie.moviename+'", "path" : "' + m.movie.moviepath + '"}' );
-		outlet(2, "movielist", "append", m.movie.moviename);
-
-		postmovinfo(movies[regname]);
+	o.autostart=0;
+	o.automatic=0;
+	if(drawto==="") {
+		postln("disable output_texture")
+		o.output_texture=0;
 	}
 	else {
-		o.freepeer();
+		postln("enable output_texture")
+		o.output_texture=1;
+		o.drawto=drawto;
 	}
+
+	// engine specific stuff goes here...
+	if(o.engine=="avf")
+		useseeknotify = 1;
+	
+	var idx = movct++;
+	var regname = o.getregisteredname();
+	movnames.push(regname);
+	var m = new Object();
+	movies[regname] = m;
+	m.movie = o;
+	m.index = idx;
+	m.listener = new JitterListener(regname, movcallback);
+	
+	o.asyncread(path);
 }
 
 function postmovinfo(m) {
@@ -232,9 +216,12 @@ function postmovinfo(m) {
 function dictionary(dname) {
 	postln("reading dictionary " + dname);
 	var d = new Dict(dname);
-	clear();
 	var keys = d.getkeys();
+	if(!keys)
+		return;
 	
+	clear();
+
 	// convert single value to array
 	if(typeof(keys) === "string") {
 		keys = [keys];
@@ -270,6 +257,7 @@ function dictionary(dname) {
 }
 
 function writedict() {
+	writeloopstatetodict(curmovob);
 	if(arguments.length) {
 		moviedict.export_json(arguments[0]);
 	}
@@ -290,6 +278,7 @@ function readdict() {
 }
 
 function getdict() {
+	writeloopstatetodict(curmovob);
 	outlet(2, "dictionary", moviedict.name);
 }
 
@@ -337,7 +326,9 @@ function play() {
 		var i=arguments[0];
 		
 	if(movieindexvalid(i)) {
-		pause()
+		pause();
+		writeloopstatetodict(curmovob);
+
 		curmov = i;
 		curmovob = getmovie_index(curmov);
 		postln("playing movie: " + curmov + " " + curmovob.moviefile);
@@ -345,9 +336,11 @@ function play() {
 			doplay();
 		ispaused = false;
 		
-		curmovob.loop = loopstate;
+		curmovob.loop = loopmode;
+		readloopstatefromdict(curmovob);
 		var loopi = curmovob.looppoints_secs[0] / curmovob.seconds;
 		var loopo = curmovob.looppoints_secs[1] / curmovob.seconds;
+		// output normalized looppoints for GUI
 		outlet(1, "looppoints", loopi, loopo);
 	}
 }
@@ -404,20 +397,20 @@ function sendmovies() {
 
 function sendmovie(movie, mess, args) {
 	if (Function.prototype.isPrototypeOf(movie[mess])) {
-		postln("sending message "+mess);
+		postln("sending message " + mess + " with args " + args);
 		movie[mess](args);
 	} 
 	else if(mess.search("get")==0) {
 		var attr=mess.substr(3, mess.length);
-		postln("getting attr "+attr);
+		postln("getting attr " + attr);
 		outlet(1, attr, movie[attr]);
 	}
 	else {
-		postln("setting attr "+mess);
+		postln("setting attr " + mess + " with args " + args);
 		movie[mess] = args;	
 		var regname = movie.getregisteredname();
 		var idx = movies[regname].index;
-		moviedict.replace(idx + "::attributes::"+mess, args);
+		moviedict.replace(idx + "::attributes::" + mess, args);
 	}	
 }
 
@@ -429,9 +422,9 @@ function position(p) {
 }
 
 function loop(state) {
-	loopstate = state;
+	loopmode = state;
 	if(curmovob) {
-		curmovob.loop = loopstate;
+		curmovob.loop = loopmode;
 	}
 }
 
@@ -443,79 +436,24 @@ function looppoints(loopi, loopo) {
 	}
 }
 
-/////////////////////////////////////////////
-// #mark GUI
-/////////////////////////////////////////////
-
-var guidrawto;
-var guimatrix;
-var guivp;
-var guirender;
-var generatethumb = 0;
-var maxh=120;
-var thumbpos = 0.25;
-
-var tmatrix = new JitterMatrix(4,"char",80,60);
-
-function setguidrawto(arg) {
-	if(arg !== guidrawto) {
-		postln("initing gui with context: "+arg);
-		guidrawto=arg;
-		initgui();
-		generatethumb=1;
+// maybe not an issue, but only write looppoints on movie changes or dictionary writes
+function writeloopstatetodict(ob) {
+	if(ob) {
+		var idx = movies[ob.getregisteredname()].index;
+		moviedict.replace(idx + "::attributes::looppoints_secs", ob.looppoints_secs);
 	}
-	postln("sending matrix");
-	tmatrix.setall(80);
-	guimatrix.dstdimstart = [80,60];
-	guimatrix.dstdimend = [159,119];
-	guimatrix.frommatrix(tmatrix.name);
-	guidraw();
 }
 
-function setguisize(arg) {
-	var s = arrayfromargs(messagename,arguments);
-	guimatrix.dim=s;
-}
-
-function initgui() {
-	guirender = new JitterObject("jit.gl.render",guidrawto);
-	guimatrix = new JitterMatrix(4,"char",320,240);
-	//guimatrix.adapt=0;
-	dummymatrix.setall(0);
-	guimatrix.frommatrix(dummymatrix.name);
-	guimatrix.usedstdim=1;
-	//guimatrix.usesrcdim=1;
-	tmatrix.setall(120);
-	guimatrix.dstdimstart = [0,0];
-	guimatrix.dstdimend = [79,59];
-	guimatrix.frommatrix(tmatrix.name);
-
-	guivp = new JitterObject("jit.gl.videoplane", guidrawto); 
-	guivp.transform_reset = 2;
-	guivp.jit_matrix(guimatrix.name);
-}
-
-function getthumbnail(mov) {
-	//postln("get thumb for mov "+mov.moviename+", index: "+index);
-	var mdim = mov.moviedim;
-	var aspect = mdim[0]/mdim[1];
-	mdim[0] = maxh*aspect;
-	mdim[1] = maxh;
-	postln("creating thum matrix with dims "+mdim+" at time: "+mov.time);
-	var tmatrix = new JitterMatrix(4,"char",mdim[0],mdim[1]);
-	var drawtex = drawtexture();
-	mov.output_texture=0;
-	mov.matrixcalc(tmatrix,tmatrix);
-	dummymatrix.setall(120);
-	guimatrix.dstdimstart = [80,60];
-	guimatrix.dstdimend = [159,119];
-	guimatrix.frommatrix(dummymatrix.name);
-	guidraw();
-	return tmatrix;
-}
-
-function guidraw() {
-	guirender.erase();
-	guirender.drawclients();
-	guirender.swap();
+// loop state is reset on file read, so grab it from the dictionary when playback triggered
+function readloopstatefromdict(ob) {
+	if(ob) {
+		var idx = movies[ob.getregisteredname()].index;
+		if(moviedict.contains(idx + "::attributes::looppoints_secs")) {
+			postln("found looppoints: " + moviedict.get(idx + "::attributes::looppoints_secs"));
+			ob.looppoints_secs = moviedict.get(idx + "::attributes::looppoints_secs");
+		}
+		else {
+			postln("did not find looppoints");
+		}
+	}
 }
