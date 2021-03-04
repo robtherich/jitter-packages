@@ -72,7 +72,10 @@ function movcallback(event){
 		}
 	}
 	else if(event.eventname==="seeknotify") {
-	 
+		outlet(2, "seeknotify")
+	}
+	else if(event.eventname==="loopreport") {
+		outlet(2, "loopnotify")
 	}
 	//post("callback: " + event.subjectname + " sent "+ event.eventname + " with (" + event.args + ")\n");		
 }
