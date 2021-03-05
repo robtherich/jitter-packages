@@ -14,18 +14,19 @@ var cache_sizeauto = 5;
 declareattribute("cache_sizeauto");
 
 var drawto = "";
-//declareattribute("drawto", null, setdrawto);
+declareattribute("drawto", null, "setdrawto");
+
+var verbose = 0;
+declareattribute("verbose", null, null);
 
 var curmov=-1;
-var ispaused=true;
 var isstopped=false;
 var saveargs=true;
 var readcount = 0;
 var loopmode = 1;
 
-var filetypes_mac = ["MPEG", "mpg4","MooV"];
-//var filetypes_win = ["WVC1","WMVA","WMV3","WMV2"];
-var filetypes = filetypes_mac;
+// viddll supports all these, first 3 are supported by avf
+var filetypes = ["MPEG", "mpg4","MooV", "WVC1", "WMVA", "WMV3", "WMV2", "M4V ", "VfW "];
 
 var moviedict = new Dict();
 var movies = new Object();
@@ -40,11 +41,10 @@ var movct = 0;
 var savedargs = new Array();
 var dummymatrix = new JitterMatrix(4,"char",320,240);
 var swaplisten=null;
-
 const outtex = "jit_gl_texture";
 const outmat = "jit_matrix";
 
-var verbose = true;
+
 function postln(arg) {
 	if(verbose)
 		post(arg+"\n");
@@ -67,8 +67,11 @@ const useasync = (is820 || !isviddll);
 // force override here if asyncread is causing issues
 //const useasync = false;
 
-function swapcallback(event){	
-	if (event.eventname=="swap" && !ispaused) {
+function swapcallback(event){
+	//post("callback: " + event.subjectname + " sent "+ event.eventname + " with (" + event.args + ")\n");			
+
+	// if context is root we use swap, if jit.gl.node use draw
+	if ((event.eventname=="swap" || event.eventname=="draw")) {
 		drawmovie();
 	}
 }
@@ -92,7 +95,7 @@ function movcallback(event){
 }
 
 function bang() {
-	if(!drawtexture() && !ispaused)
+	if(!drawtexture())
 		drawmovie();
 }
 
@@ -151,17 +154,22 @@ function finalizemovie(m) {
 	postln("name: "+m.movie.moviename);
 }
 
+function getdrawto() {
+	return drawto;
+}
+
 function setdrawto(arg) {
-	postln("setdrawto " + arg);
-	if(arg) {
-		drawto=arg;
+	if(arg === drawto || !arg) {
+		// bounce
+		return;
 	}
-	else {
-		postln("setdrawto to none");
-		drawto="";
-	}	
+
+	postln("setdrawto " + arg);
+	drawto=arg;	
 	setmovieattr("drawto",drawto);
 	setmovieattr("output_texture",1);
+	if(swaplisten)
+		swaplisten.subjectname = "";
 	swaplisten = new JitterListener(drawto,swapcallback);
 }
 
@@ -175,17 +183,14 @@ function ismovie(t) {
 
 function clear() {
 	readcount = 0;
-	ispaused = true;
+	curmovob = null;
 	for(n in movies) {
 		getmovie_name(n).freepeer();
 	}
 	movnames.splice(0,movnames.length);
 	movies = new Object();
-	curmovob = null;
-
 	moviedict.clear();
 	movct = 0;
-
 	outlet(2, "movielist", "clear");
 }
 
@@ -360,34 +365,38 @@ function movieindexvalid(idx) {
 	return (idx < movnames.length && idx >= 0);
 }
 
-function pause() {
-	ispaused = true;
-	if(curmovob)
-		curmovob.stop();	
-}
-
 function start() {
 	doplay();
 }
 
 function stop() {
-	pause();
+	if(curmovob)
+		curmovob.stop();
 	isstopped = true;
 }
 
 function scrub(pos) {
 	if(curmovob) {
 		curmovob.position = pos;
-		ispaused = false;
 	}
 }
 
 function doplay() {
 	if(curmovob) {
 		curmovob.start();
-		ispaused = false;
 	}
 	isstopped = false;
+}
+
+function endmovie() {
+	if(curmovob) {
+		curmovob.stop();
+		writeloopstatetodict(curmovob);
+		if(isviddll && curmovob && cachemode == cachemode_auto) {
+			postln("zeroing cache");
+			curmovob.cache_size = 0;
+		}
+	}
 }
 
 function play() {
@@ -396,19 +405,12 @@ function play() {
 		var i=arguments[0];
 		
 	if(movieindexvalid(i)) {
-		pause();
-		writeloopstatetodict(curmovob);
-		if(isviddll && curmovob && cachemode == cachemode_auto) {
-			postln("zeroing cache");
-			curmovob.cache_size = 0;
-		}
-
+		endmovie();
 		curmov = i;
 		curmovob = getmovie_index(curmov);
 		postln("playing movie: " + curmov + " " + curmovob.moviefile);
 		if(!isstopped)
 			doplay();
-		ispaused = false;
 		
 		curmovob.loop = loopmode;
 		readloopstatefromdict(curmovob);

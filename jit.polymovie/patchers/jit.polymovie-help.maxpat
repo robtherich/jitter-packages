@@ -10,7 +10,7 @@
 		}
 ,
 		"classnamespace" : "box",
-		"rect" : [ 654.0, 140.0, 1167.0, 739.0 ],
+		"rect" : [ 517.0, 87.0, 1167.0, 739.0 ],
 		"bglocked" : 0,
 		"openinpresentation" : 0,
 		"default_fontsize" : 12.0,
@@ -40,25 +40,62 @@
 		"assistshowspatchername" : 0,
 		"boxes" : [ 			{
 				"box" : 				{
-					"id" : "obj-53",
+					"id" : "obj-62",
 					"maxclass" : "message",
 					"numinlets" : 2,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 26.0, 186.0, 86.0, 22.0 ],
-					"text" : "setdrawto wrld"
+					"patching_rect" : [ 199.5, 310.0, 85.0, 22.0 ],
+					"text" : "getframecount"
 				}
 
 			}
 , 			{
 				"box" : 				{
 					"id" : "obj-55",
+					"maxclass" : "jit.pwindow",
+					"numinlets" : 1,
+					"numoutlets" : 2,
+					"outlettype" : [ "jit_matrix", "" ],
+					"patching_rect" : [ 912.0, 267.0, 200.0, 149.0 ]
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-27",
+					"maxclass" : "newobj",
+					"numinlets" : 1,
+					"numoutlets" : 3,
+					"outlettype" : [ "jit_matrix", "", "" ],
+					"patching_rect" : [ 912.0, 238.0, 115.0, 22.0 ],
+					"text" : "jit.polymovie @vol 0",
+					"varname" : "jitpolymovie[1]"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-57",
+					"linecount" : 4,
 					"maxclass" : "message",
 					"numinlets" : 2,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 26.0, 212.0, 61.0, 22.0 ],
-					"text" : "setdrawto"
+					"patching_rect" : [ 710.0, 113.0, 200.0, 62.0 ],
+					"text" : "\"Macintosh HD:/Applications/Max.app/Contents/Resources/C74/media/jitter/chickens.mp4\""
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-53",
+					"maxclass" : "message",
+					"numinlets" : 2,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 26.0, 186.0, 70.0, 22.0 ],
+					"text" : "drawto wrld"
 				}
 
 			}
@@ -241,7 +278,7 @@
 					"numinlets" : 2,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 961.0, 391.0, 60.0, 22.0 ],
+					"patching_rect" : [ 816.0, 371.0, 60.0, 22.0 ],
 					"text" : "expandall"
 				}
 
@@ -254,7 +291,7 @@
 					"numoutlets" : 2,
 					"outlettype" : [ "", "bang" ],
 					"parameter_enable" : 0,
-					"patching_rect" : [ 895.5, 361.0, 50.0, 22.0 ]
+					"patching_rect" : [ 816.0, 321.0, 50.0, 22.0 ]
 				}
 
 			}
@@ -290,7 +327,7 @@
 					"numinlets" : 1,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 844.0, 158.0, 99.0, 22.0 ],
+					"patching_rect" : [ 912.0, 186.0, 99.0, 22.0 ],
 					"text" : "prepend readdict"
 				}
 
@@ -303,7 +340,7 @@
 					"numinlets" : 2,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 844.0, 121.0, 249.0, 35.0 ],
+					"patching_rect" : [ 912.0, 149.0, 249.0, 35.0 ],
 					"text" : "\"Macintosh HD:/Users/rob/Desktop/polymoviedict.json\""
 				}
 
@@ -315,7 +352,7 @@
 					"numinlets" : 1,
 					"numoutlets" : 2,
 					"outlettype" : [ "", "" ],
-					"patching_rect" : [ 844.0, 62.0, 72.0, 47.0 ]
+					"patching_rect" : [ 912.0, 90.0, 72.0, 47.0 ]
 				}
 
 			}
@@ -326,7 +363,7 @@
 					"numinlets" : 1,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 147.0, 558.0, 128.0, 22.0 ],
+					"patching_rect" : [ 686.0, 186.0, 128.0, 22.0 ],
 					"text" : "prepend appendmovie"
 				}
 
@@ -338,7 +375,7 @@
 					"numinlets" : 1,
 					"numoutlets" : 2,
 					"outlettype" : [ "", "" ],
-					"patching_rect" : [ 147.0, 501.0, 72.0, 47.0 ]
+					"patching_rect" : [ 686.0, 42.0, 72.0, 47.0 ]
 				}
 
 			}
@@ -451,7 +488,7 @@
 					"numinlets" : 2,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 747.0, 162.0, 35.0, 22.0 ],
+					"patching_rect" : [ 26.0, 340.0, 35.0, 22.0 ],
 					"text" : "clear"
 				}
 
@@ -463,7 +500,7 @@
 					"numinlets" : 2,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 722.0, 83.0, 44.0, 22.0 ],
+					"patching_rect" : [ 26.0, 316.0, 44.0, 22.0 ],
 					"text" : "getdict"
 				}
 
@@ -487,7 +524,7 @@
 					"maxclass" : "dict.view",
 					"numinlets" : 1,
 					"numoutlets" : 0,
-					"patching_rect" : [ 661.0, 472.0, 306.0, 165.0 ]
+					"patching_rect" : [ 661.0, 467.0, 256.0, 170.0 ]
 				}
 
 			}
@@ -1051,8 +1088,8 @@
 					"numinlets" : 2,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 26.0, 162.0, 79.0, 22.0 ],
-					"text" : "setdrawto ctx"
+					"patching_rect" : [ 26.0, 162.0, 63.0, 22.0 ],
+					"text" : "drawto ctx"
 				}
 
 			}
@@ -1099,7 +1136,7 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 355.0, 361.0, 153.0, 22.0 ],
-					"text" : "jit_matrix u013001576"
+					"text" : "jit_gl_texture u229006834"
 				}
 
 			}
@@ -1431,7 +1468,7 @@
 									"maxclass" : "bpatcher",
 									"numinlets" : 1,
 									"numoutlets" : 0,
-									"offset" : [ 0.0, -4.0 ],
+									"offset" : [ 0.0, -50.0 ],
 									"patcher" : 									{
 										"fileversion" : 1,
 										"appversion" : 										{
@@ -2155,8 +2192,8 @@
 					"numinlets" : 1,
 					"numoutlets" : 3,
 					"outlettype" : [ "jit_matrix", "bang", "" ],
-					"patching_rect" : [ 290.0, 409.0, 147.0, 22.0 ],
-					"text" : "jit.world wrld @drawto ctx"
+					"patching_rect" : [ 290.0, 409.0, 49.0, 22.0 ],
+					"text" : "jit.world"
 				}
 
 			}
@@ -2167,7 +2204,7 @@
 					"numinlets" : 2,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 888.0, 421.0, 65.0, 22.0 ],
+					"patching_rect" : [ 816.0, 345.0, 65.0, 22.0 ],
 					"text" : "expand $1"
 				}
 
@@ -2336,7 +2373,23 @@
 , 			{
 				"patchline" : 				{
 					"destination" : [ "obj-2", 0 ],
+					"order" : 1,
 					"source" : [ "obj-26", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-27", 0 ],
+					"order" : 0,
+					"source" : [ "obj-26", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-55", 0 ],
+					"source" : [ "obj-27", 0 ]
 				}
 
 			}
@@ -2356,7 +2409,16 @@
 			}
 , 			{
 				"patchline" : 				{
+					"destination" : [ "obj-27", 0 ],
+					"order" : 0,
+					"source" : [ "obj-3", 1 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
 					"destination" : [ "obj-30", 0 ],
+					"order" : 1,
 					"source" : [ "obj-3", 1 ]
 				}
 
@@ -2415,6 +2477,15 @@
 , 			{
 				"patchline" : 				{
 					"destination" : [ "obj-2", 0 ],
+					"order" : 1,
+					"source" : [ "obj-36", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-27", 0 ],
+					"order" : 0,
 					"source" : [ "obj-36", 0 ]
 				}
 
@@ -2457,6 +2528,15 @@
 , 			{
 				"patchline" : 				{
 					"destination" : [ "obj-44", 0 ],
+					"order" : 1,
+					"source" : [ "obj-41", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-57", 1 ],
+					"order" : 0,
 					"source" : [ "obj-41", 0 ]
 				}
 
@@ -2471,6 +2551,15 @@
 , 			{
 				"patchline" : 				{
 					"destination" : [ "obj-2", 0 ],
+					"order" : 1,
+					"source" : [ "obj-43", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-27", 0 ],
+					"order" : 0,
 					"source" : [ "obj-43", 0 ]
 				}
 
@@ -2478,6 +2567,15 @@
 , 			{
 				"patchline" : 				{
 					"destination" : [ "obj-2", 0 ],
+					"order" : 1,
+					"source" : [ "obj-44", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-27", 0 ],
+					"order" : 0,
 					"source" : [ "obj-44", 0 ]
 				}
 
@@ -2547,15 +2645,15 @@
 			}
 , 			{
 				"patchline" : 				{
-					"destination" : [ "obj-2", 0 ],
-					"source" : [ "obj-55", 0 ]
+					"destination" : [ "obj-90", 0 ],
+					"source" : [ "obj-56", 0 ]
 				}
 
 			}
 , 			{
 				"patchline" : 				{
-					"destination" : [ "obj-90", 0 ],
-					"source" : [ "obj-56", 0 ]
+					"destination" : [ "obj-44", 0 ],
+					"source" : [ "obj-57", 0 ]
 				}
 
 			}
@@ -2586,6 +2684,13 @@
 				"patchline" : 				{
 					"destination" : [ "obj-59", 0 ],
 					"source" : [ "obj-61", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-2", 0 ],
+					"source" : [ "obj-62", 0 ]
 				}
 
 			}
@@ -2688,6 +2793,13 @@
 				"bootpath" : "~/dev/cycling/jitter-packages/jit.polymovie/code",
 				"patcherrelativepath" : "../code",
 				"type" : "TEXT",
+				"implicit" : 1
+			}
+, 			{
+				"name" : "jit.polymovie.maxpat",
+				"bootpath" : "~/dev/cycling/jitter-packages/jit.polymovie/patchers",
+				"patcherrelativepath" : ".",
+				"type" : "JSON",
 				"implicit" : 1
 			}
  ],

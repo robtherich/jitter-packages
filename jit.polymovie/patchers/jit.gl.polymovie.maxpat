@@ -10,7 +10,7 @@
 		}
 ,
 		"classnamespace" : "box",
-		"rect" : [ 319.0, 348.0, 667.0, 448.0 ],
+		"rect" : [ 318.0, 348.0, 667.0, 448.0 ],
 		"bglocked" : 0,
 		"openinpresentation" : 0,
 		"default_fontsize" : 12.0,
@@ -40,13 +40,28 @@
 		"assistshowspatchername" : 0,
 		"boxes" : [ 			{
 				"box" : 				{
+					"bubble" : 1,
+					"bubblepoint" : 0.0,
+					"bubbleside" : 2,
+					"id" : "obj-24",
+					"linecount" : 2,
+					"maxclass" : "comment",
+					"numinlets" : 1,
+					"numoutlets" : 0,
+					"patching_rect" : [ 108.5, 186.0, 169.0, 52.0 ],
+					"text" : "if no arg provided use implicit context from jit.gl.texture"
+				}
+
+			}
+, 			{
+				"box" : 				{
 					"id" : "obj-26",
 					"maxclass" : "newobj",
 					"numinlets" : 1,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 48.5, 274.0, 108.0, 22.0 ],
-					"text" : "prepend setdrawto"
+					"patching_rect" : [ 48.5, 287.0, 92.0, 22.0 ],
+					"text" : "prepend drawto"
 				}
 
 			}
@@ -77,18 +92,19 @@
 , 			{
 				"box" : 				{
 					"id" : "obj-18",
+					"linecount" : 2,
 					"maxclass" : "newobj",
 					"numinlets" : 1,
 					"numoutlets" : 3,
 					"outlettype" : [ "", "", "" ],
-					"patching_rect" : [ 48.5, 250.0, 212.0, 22.0 ],
-					"restore" : [ "wrld" ],
+					"patching_rect" : [ 48.5, 250.0, 216.0, 35.0 ],
+					"restore" : [ "" ],
 					"saved_object_attributes" : 					{
 						"parameter_enable" : 0,
 						"parameter_mappable" : 0
 					}
 ,
-					"text" : "pattr drawto @bindto gltexture::drawto",
+					"text" : "pattr drawto @bindto gltexture::drawto @autorestore 0",
 					"varname" : "drawto"
 				}
 
@@ -102,7 +118,7 @@
 					"numinlets" : 2,
 					"numoutlets" : 2,
 					"outlettype" : [ "bang", "" ],
-					"patching_rect" : [ 154.0, 136.0, 59.0, 23.0 ],
+					"patching_rect" : [ 154.0, 114.0, 59.0, 23.0 ],
 					"text" : "sel done"
 				}
 
@@ -251,8 +267,8 @@
 					"numinlets" : 1,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 38.0, 136.0, 108.0, 22.0 ],
-					"text" : "prepend setdrawto"
+					"patching_rect" : [ 38.0, 114.0, 92.0, 22.0 ],
+					"text" : "prepend drawto"
 				}
 
 			}
@@ -318,6 +334,32 @@
 ,
 					"text" : "js jitpolymovie",
 					"varname" : "jsjitpolymovie"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"attr" : "drawto",
+					"id" : "obj-15",
+					"maxclass" : "attrui",
+					"numinlets" : 1,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 447.0, 226.0, 150.0, 22.0 ],
+					"text_width" : 64.0
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"attr" : "verbose",
+					"id" : "obj-23",
+					"maxclass" : "attrui",
+					"numinlets" : 1,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 447.0, 201.0, 96.0, 22.0 ],
+					"text_width" : 65.0
 				}
 
 			}
@@ -397,6 +439,13 @@
 , 			{
 				"patchline" : 				{
 					"destination" : [ "obj-2", 0 ],
+					"source" : [ "obj-15", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-2", 0 ],
 					"source" : [ "obj-16", 0 ]
 				}
 
@@ -468,6 +517,13 @@
 				"patchline" : 				{
 					"destination" : [ "obj-21", 0 ],
 					"source" : [ "obj-22", 1 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-2", 0 ],
+					"source" : [ "obj-23", 0 ]
 				}
 
 			}
