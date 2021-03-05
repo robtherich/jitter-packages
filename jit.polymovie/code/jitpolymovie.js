@@ -49,6 +49,7 @@ function postln(arg) {
 	if(verbose)
 		post(arg+"\n");
 }
+postln.local = 1;
 
 const is820 = (max.version >= 820);
 var tmp = JitterObject("jit.movie");
@@ -67,6 +68,12 @@ const useasync = (is820 || !isviddll);
 // force override here if asyncread is causing issues
 //const useasync = false;
 
+
+function bang() {
+	if(!drawtexture())
+		drawmovie();
+}
+
 function swapcallback(event){
 	//post("callback: " + event.subjectname + " sent "+ event.eventname + " with (" + event.args + ")\n");			
 
@@ -75,6 +82,7 @@ function swapcallback(event){
 		drawmovie();
 	}
 }
+swapcallback.local = 1;
 
 function movcallback(event){
 	if(event.eventname==="read") {
@@ -93,11 +101,7 @@ function movcallback(event){
 	}
 	//post("callback: " + event.subjectname + " sent "+ event.eventname + " with (" + event.args + ")\n");		
 }
-
-function bang() {
-	if(!drawtexture())
-		drawmovie();
-}
+movcallback.local = 1;
 
 function drawmovie() {
 	if(!curmovob)
@@ -118,45 +122,28 @@ function drawmovie() {
 	}
 	outlet(1, "position", o.position);
 }
+drawmovie.local = 1;
 
 function drawtexture() {
 	return !(drawto==="");
 }
+drawtexture.local = 1;
 
 function getmovie_index(i) {
 	if(i>=0 && i<movnames.length) 
 		return movies[movnames[i]]["movie"];
 	return null;
 }
+getmovie_index.local = 1;
 
 function getmovie_name(n) {
 	return movies[n]["movie"];
 }
+getmovie_name.local = 1;
 
 /////////////////////////////////////////////
 // #mark Read and Init
 /////////////////////////////////////////////
-
-function finalizeread() {
-	outlet(2, "readfolder", "done", readcount);
-	outlet(2, "dictionary", moviedict.name);
-}
-
-function finalizemovie(m) {
-	readcount++;
-	moviedict.replace(m.index+"::name", m.movie.moviename);
-	moviedict.replace(m.index+"::path", m.movie.moviepath);
-
-	// overwrite full path with filename
-	outlet(2, "movielist", "setitem", m.index, m.movie.moviename);
-	
-	postln("movie info for movie index: "+m.index);
-	postln("name: "+m.movie.moviename);
-}
-
-function getdrawto() {
-	return drawto;
-}
 
 function setdrawto(arg) {
 	if(arg === drawto || !arg) {
@@ -173,14 +160,6 @@ function setdrawto(arg) {
 	swaplisten = new JitterListener(drawto,swapcallback);
 }
 
-function ismovie(t) {
-	for(f in filetypes) {
-		if(filetypes[f]===t)
-			return true;
-	}
-	return false;
-}
-
 function clear() {
 	readcount = 0;
 	curmovob = null;
@@ -194,13 +173,13 @@ function clear() {
 	outlet(2, "movielist", "clear");
 }
 
-function readfolder(arg) {
+function readfolder(path) {
 	clear();
-	appendfolder(arg);
+	appendfolder(path);
 }
 
-function appendfolder(arg) {
-	var f = new Folder(arg);
+function appendfolder(path) {
+	var f = new Folder(path);
 	var fpath = f.pathname;
 	var fcount = f.count;
 	f.reset();
@@ -221,49 +200,6 @@ function appendfolder(arg) {
 function appendmovie(path) {
 	addmovie(path)
 	doargattrs();
-}
-
-function addmovie(path) {
-	var o = new JitterObject("jit.movie");
-	o.autostart=0;
-	o.automatic=0;
-	if(!swaplisten) {
-		postln("disable output_texture")
-		o.output_texture=0;
-	}
-	else {
-		postln("enable output_texture")
-		o.output_texture=1;
-		o.drawto=drawto;
-	}
-
-	// engine specific stuff goes here...
-	if(isviddll) {
-		o.cache_size = cache_size;
-	}
-	
-	var idx = movct++;
-	var regname = o.getregisteredname();
-	movnames.push(regname);
-	var m = new Object();
-	movies[regname] = m;
-	m.movie = o;
-	m.index = idx;
-	m.listener = new JitterListener(regname, movcallback);
-
-	// placeholder values, will overwrite in finalizemovie
-	moviedict.setparse(m.index, '{ "name" : "'+m.movie.moviename+'", "path" : "' + m.movie.moviepath + '"}' );
-	
-	// placeholder for proper umenu ordering
-	outlet(2, "movielist", "append", m.path);
-	
-	if(useasync) {
-		o.asyncread(path);
-	}
-	else {
-		o.read(path);
-		finalizemovie(m);
-	}
 }
 
 function dictionary(dname) {
@@ -339,6 +275,83 @@ function getdict() {
 	outlet(2, "dictionary", moviedict.name);
 }
 
+// from patcherargs
+function done() {
+	saveargs=false;
+}
+
+function addmovie(path) {
+	var o = new JitterObject("jit.movie");
+	o.autostart=0;
+	o.automatic=0;
+	if(!swaplisten) {
+		postln("disable output_texture")
+		o.output_texture=0;
+	}
+	else {
+		postln("enable output_texture")
+		o.output_texture=1;
+		o.drawto=drawto;
+	}
+
+	// engine specific stuff goes here...
+	if(isviddll) {
+		o.cache_size = cache_size;
+	}
+	
+	var idx = movct++;
+	var regname = o.getregisteredname();
+	movnames.push(regname);
+	var m = new Object();
+	movies[regname] = m;
+	m.movie = o;
+	m.index = idx;
+	m.listener = new JitterListener(regname, movcallback);
+
+	// placeholder values, will overwrite in finalizemovie
+	moviedict.setparse(m.index, '{ "name" : "'+m.movie.moviename+'", "path" : "' + m.movie.moviepath + '"}' );
+	
+	// placeholder for proper umenu ordering
+	outlet(2, "movielist", "append", m.path);
+	
+	if(useasync) {
+		o.asyncread(path);
+	}
+	else {
+		o.read(path);
+		finalizemovie(m);
+	}
+}
+addmovie.local = 1;
+
+function ismovie(t) {
+	for(f in filetypes) {
+		if(filetypes[f]===t)
+			return true;
+	}
+	return false;
+}
+ismovie.local = 1;
+
+function finalizeread() {
+	outlet(2, "readfolder", "done", readcount);
+	outlet(2, "dictionary", moviedict.name);
+}
+finalizeread.local = 1;
+
+function finalizemovie(m) {
+	readcount++;
+	moviedict.replace(m.index+"::name", m.movie.moviename);
+	moviedict.replace(m.index+"::path", m.movie.moviepath);
+
+	// overwrite full path with filename
+	outlet(2, "movielist", "setitem", m.index, m.movie.moviename);
+	
+	postln("movie info for movie index: "+m.index);
+	postln("name: "+m.movie.moviename);
+}
+finalizemovie.local = 1;
+
 // maybe not an issue, but only write looppoints on movie changes or dictionary writes
 function writeloopstatetodict(ob) {
 	if(ob) {
@@ -346,6 +359,7 @@ function writeloopstatetodict(ob) {
 		moviedict.replace(idx + "::attributes::looppoints_secs", ob.looppoints_secs);
 	}
 }
+writeloopstatetodict.local = 1;
 
 // loop state is reset on file read, so grab it from the dictionary when playback triggered
 function readloopstatefromdict(ob) {
@@ -356,48 +370,11 @@ function readloopstatefromdict(ob) {
 		}
 	}
 }
+readloopstatefromdict.local = 1;
 
 /////////////////////////////////////////////
 // #mark Playback
 /////////////////////////////////////////////
-
-function movieindexvalid(idx) {
-	return (idx < movnames.length && idx >= 0);
-}
-
-function start() {
-	doplay();
-}
-
-function stop() {
-	if(curmovob)
-		curmovob.stop();
-	isstopped = true;
-}
-
-function scrub(pos) {
-	if(curmovob) {
-		curmovob.position = pos;
-	}
-}
-
-function doplay() {
-	if(curmovob) {
-		curmovob.start();
-	}
-	isstopped = false;
-}
-
-function endmovie() {
-	if(curmovob) {
-		curmovob.stop();
-		writeloopstatetodict(curmovob);
-		if(isviddll && curmovob && cachemode == cachemode_auto) {
-			postln("zeroing cache");
-			curmovob.cache_size = 0;
-		}
-	}
-}
 
 function play() {
 	var i=0;	
@@ -426,30 +403,50 @@ function play() {
 	}
 }
 
-/////////////////////////////////////////////
-// #mark Args Attrs and Messages
-/////////////////////////////////////////////
-
-// from patcherargs
-function done() {
-	saveargs=false;
+function start() {
+	doplay();
 }
 
-function doargattrs() {
-	for(n in movies) {
-		var m = getmovie_name(n);
-		for(i in savedargs) {
-			var str = savedargs[i];
-			var ary = str.split(",");
-			sendmovie(m, ary[0], ary.slice(1,ary.length));
-		}
+function stop() {
+	if(curmovob)
+		curmovob.stop();
+	isstopped = true;
+}
+
+function scrub(pos) {
+	if(curmovob) {
+		curmovob.position = pos;
 	}
 }
 
-function setmovieattr(arg, val) {	
-	for(n in movies) 
-		getmovie_name(n)[arg] = val;
+function doplay() {
+	if(curmovob) {
+		curmovob.start();
+	}
+	isstopped = false;
 }
+doplay.local = 1;
+
+function endmovie() {
+	if(curmovob) {
+		curmovob.stop();
+		writeloopstatetodict(curmovob);
+		if(isviddll && curmovob && cachemode == cachemode_auto) {
+			postln("zeroing cache");
+			curmovob.cache_size = 0;
+		}
+	}
+}
+endmovie.local = 1;
+
+function movieindexvalid(idx) {
+	return (idx < movnames.length && idx >= 0);
+}
+movieindexvalid.local = 1;
+
+/////////////////////////////////////////////
+// #mark Args Attrs and Messages
+/////////////////////////////////////////////
 
 function anything() {
 	if(saveargs) {
@@ -471,25 +468,6 @@ function sendmovies() {
 		
 	for(n in movies) {
 		sendmovie(getmovie_name(n),mess, a);
-	}	
-}
-
-function sendmovie(movie, mess, args) {
-	if (Function.prototype.isPrototypeOf(movie[mess])) {
-		postln("sending message " + mess + " with args " + args);
-		movie[mess](args);
-	} 
-	else if(mess.search("get")==0) {
-		var attr=mess.substr(3, mess.length);
-		postln("getting attr " + attr);
-		outlet(1, attr, movie[attr]);
-	}
-	else {
-		postln("setting attr " + mess + " with args " + args);
-		movie[mess] = args;	
-		var regname = movie.getregisteredname();
-		var idx = movies[regname].index;
-		moviedict.replace(idx + "::attributes::" + mess, args);
 	}	
 }
 
@@ -533,3 +511,41 @@ function autostart(v) {
 function output_texture(v) {
 	post("modifying output_texture unsupported\n");
 }
+
+function sendmovie(movie, mess, args) {
+	if (Function.prototype.isPrototypeOf(movie[mess])) {
+		postln("sending message " + mess + " with args " + args);
+		movie[mess](args);
+	} 
+	else if(mess.search("get")==0) {
+		var attr=mess.substr(3, mess.length);
+		postln("getting attr " + attr);
+		outlet(1, attr, movie[attr]);
+	}
+	else {
+		postln("setting attr " + mess + " with args " + args);
+		movie[mess] = args;	
+		var regname = movie.getregisteredname();
+		var idx = movies[regname].index;
+		moviedict.replace(idx + "::attributes::" + mess, args);
+	}	
+}
+sendmovie.local = 1;
+
+function doargattrs() {
+	for(n in movies) {
+		var m = getmovie_name(n);
+		for(i in savedargs) {
+			var str = savedargs[i];
+			var ary = str.split(",");
+			sendmovie(m, ary[0], ary.slice(1,ary.length));
+		}
+	}
+}
+doargattrs.local = 1;
+
+function setmovieattr(arg, val) {	
+	for(n in movies) 
+		getmovie_name(n)[arg] = val;
+}
+setmovieattr.local = 1;
