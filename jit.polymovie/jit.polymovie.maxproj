@@ -1,8 +1,8 @@
 {
 	"name" : "jit.polymovie",
 	"version" : 1,
-	"creationdate" : -766515449,
-	"modificationdate" : -766239335,
+	"creationdate" : 2082826798,
+	"modificationdate" : 3697660371,
 	"viewrect" : [ 64.0, 281.0, 300.0, 500.0 ],
 	"autoorganize" : 1,
 	"hideprojectwindow" : 0,
@@ -22,6 +22,11 @@
 			}
 ,
 			"polymoviegui.maxpat" : 			{
+				"kind" : "patcher",
+				"local" : 1
+			}
+,
+			"jit.gl.polymovie.maxpat" : 			{
 				"kind" : "patcher",
 				"local" : 1
 			}
@@ -55,5 +60,7 @@
 	"amxdtype" : 1633771873,
 	"readonly" : 0,
 	"devpathtype" : 0,
-	"devpath" : "."
+	"devpath" : ".",
+	"sortmode" : 0,
+	"viewmode" : 0
 }

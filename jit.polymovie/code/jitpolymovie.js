@@ -4,13 +4,23 @@ outlets=3;
 // outlet 1 = movie attributes
 // outlet 2 = special messages
 
+const cachemode_static = 0;
+const cachemode_auto = 1;
+var cachemode = cachemode_static;
+declareattribute("cachemode");
+var cache_size = 0.5;
+declareattribute("cache_size");
+var cache_sizeauto = 5;
+declareattribute("cache_sizeauto");
+
 var drawto = "";
+//declareattribute("drawto", null, setdrawto);
+
 var curmov=-1;
 var ispaused=true;
 var isstopped=false;
 var saveargs=true;
 var readcount = 0;
-var useseeknotify = 0;
 var loopmode = 1;
 
 var filetypes_mac = ["MPEG", "mpg4","MooV"];
@@ -44,8 +54,8 @@ const is820 = (max.version >= 820);
 var tmp = JitterObject("jit.movie");
 const engine = tmp.engine;
 tmp.freepeer();
-const isViddll = (engine === "viddll");
-if(isViddll) {
+const isviddll = (engine === "viddll");
+if(isviddll) {
 	postln("polymovie using viddll engine");
 }
 else {
@@ -53,8 +63,9 @@ else {
 }
 
 // bug in viddll engine asyncread if version is < 8.2
-// users can override here if asyncread is causing issues
-const useAsync = (is820 || !isViddll);
+const useasync = (is820 || !isviddll);
+// force override here if asyncread is causing issues
+//const useasync = false;
 
 function swapcallback(event){	
 	if (event.eventname=="swap" && !ispaused) {
@@ -141,18 +152,17 @@ function finalizemovie(m) {
 }
 
 function setdrawto(arg) {
+	postln("setdrawto " + arg);
 	if(arg) {
 		drawto=arg;
-		setmovieattr("drawto",drawto);
-		setmovieattr("output_texture",1);
-		swaplisten = new JitterListener(drawto,swapcallback);
 	}
 	else {
-		drawto=""
-		setmovieattr("drawto",drawto);
-		setmovieattr("output_texture",0);
-		swaplisten = null;
+		postln("setdrawto to none");
+		drawto="";
 	}	
+	setmovieattr("drawto",drawto);
+	setmovieattr("output_texture",1);
+	swaplisten = new JitterListener(drawto,swapcallback);
 }
 
 function ismovie(t) {
@@ -198,7 +208,7 @@ function appendfolder(arg) {
 		f.next();
 	}
 	doargattrs();
-	if(!useAsync) {
+	if(!useasync) {
 		finalizeread();
 	}
 }
@@ -212,7 +222,7 @@ function addmovie(path) {
 	var o = new JitterObject("jit.movie");
 	o.autostart=0;
 	o.automatic=0;
-	if(drawto==="") {
+	if(!swaplisten) {
 		postln("disable output_texture")
 		o.output_texture=0;
 	}
@@ -223,8 +233,9 @@ function addmovie(path) {
 	}
 
 	// engine specific stuff goes here...
-	if(o.engine=="avf")
-		useseeknotify = 1;
+	if(isviddll) {
+		o.cache_size = cache_size;
+	}
 	
 	var idx = movct++;
 	var regname = o.getregisteredname();
@@ -241,7 +252,7 @@ function addmovie(path) {
 	// placeholder for proper umenu ordering
 	outlet(2, "movielist", "append", m.path);
 	
-	if(useAsync) {
+	if(useasync) {
 		o.asyncread(path);
 	}
 	else {
@@ -292,7 +303,7 @@ function dictionary(dname) {
 		}
 	});
 	
-	if(!useAsync) {
+	if(!useasync) {
 		finalizeread();
 	}
 }
@@ -387,6 +398,10 @@ function play() {
 	if(movieindexvalid(i)) {
 		pause();
 		writeloopstatetodict(curmovob);
+		if(isviddll && curmovob && cachemode == cachemode_auto) {
+			postln("zeroing cache");
+			curmovob.cache_size = 0;
+		}
 
 		curmov = i;
 		curmovob = getmovie_index(curmov);
@@ -401,6 +416,11 @@ function play() {
 		var loopo = curmovob.looppoints_secs[1] / curmovob.seconds;
 		// output normalized looppoints for GUI
 		outlet(1, "looppoints", loopi, loopo);
+
+		if(isviddll && cachemode == cachemode_auto) {
+			postln("autosizing cache: "+cache_sizeauto);
+			curmovob.cache_size = cache_sizeauto;
+		}
 	}
 }
 

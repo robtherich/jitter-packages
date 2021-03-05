@@ -3,14 +3,14 @@
 		"fileversion" : 1,
 		"appversion" : 		{
 			"major" : 8,
-			"minor" : 2,
-			"revision" : 0,
+			"minor" : 1,
+			"revision" : 10,
 			"architecture" : "x64",
 			"modernui" : 1
 		}
 ,
 		"classnamespace" : "box",
-		"rect" : [ 591.0, 252.0, 1167.0, 658.0 ],
+		"rect" : [ 654.0, 140.0, 1167.0, 739.0 ],
 		"bglocked" : 0,
 		"openinpresentation" : 0,
 		"default_fontsize" : 12.0,
@@ -39,6 +39,154 @@
 		"subpatcher_template" : "",
 		"assistshowspatchername" : 0,
 		"boxes" : [ 			{
+				"box" : 				{
+					"id" : "obj-53",
+					"maxclass" : "message",
+					"numinlets" : 2,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 26.0, 186.0, 86.0, 22.0 ],
+					"text" : "setdrawto wrld"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-55",
+					"maxclass" : "message",
+					"numinlets" : 2,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 26.0, 212.0, 61.0, 22.0 ],
+					"text" : "setdrawto"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"format" : 6,
+					"id" : "obj-73",
+					"maxclass" : "flonum",
+					"numinlets" : 1,
+					"numoutlets" : 2,
+					"outlettype" : [ "", "bang" ],
+					"parameter_enable" : 0,
+					"patching_rect" : [ 64.0, 681.0, 50.0, 22.0 ]
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-74",
+					"maxclass" : "newobj",
+					"numinlets" : 1,
+					"numoutlets" : 3,
+					"outlettype" : [ "", "", "" ],
+					"patching_rect" : [ 64.0, 705.0, 447.0, 22.0 ],
+					"saved_object_attributes" : 					{
+						"parameter_enable" : 0,
+						"parameter_mappable" : 0
+					}
+,
+					"text" : "pattr @name cache_sizeauto @bindto jitpolymovie::jsjitpolymovie::cache_sizeauto",
+					"varname" : "cache_sizeauto"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-70",
+					"maxclass" : "newobj",
+					"numinlets" : 1,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 546.0, 617.0, 73.0, 22.0 ],
+					"saved_object_attributes" : 					{
+						"client_rect" : [ 1057, 45, 1440, 407 ],
+						"parameter_enable" : 0,
+						"parameter_mappable" : 0,
+						"storage_rect" : [ 583, 69, 1034, 197 ]
+					}
+,
+					"text" : "pattrstorage",
+					"varname" : "u999002513"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"format" : 6,
+					"id" : "obj-68",
+					"maxclass" : "flonum",
+					"numinlets" : 1,
+					"numoutlets" : 2,
+					"outlettype" : [ "", "bang" ],
+					"parameter_enable" : 0,
+					"patching_rect" : [ 64.0, 633.0, 50.0, 22.0 ]
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-66",
+					"maxclass" : "newobj",
+					"numinlets" : 1,
+					"numoutlets" : 3,
+					"outlettype" : [ "", "", "" ],
+					"patching_rect" : [ 64.0, 657.0, 400.0, 22.0 ],
+					"saved_object_attributes" : 					{
+						"parameter_enable" : 0,
+						"parameter_mappable" : 0
+					}
+,
+					"text" : "pattr @name cache_size @bindto jitpolymovie::jsjitpolymovie::cache_size",
+					"varname" : "cache_size"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-63",
+					"maxclass" : "toggle",
+					"numinlets" : 1,
+					"numoutlets" : 1,
+					"outlettype" : [ "int" ],
+					"parameter_enable" : 0,
+					"patching_rect" : [ 64.0, 583.0, 24.0, 24.0 ]
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-52",
+					"maxclass" : "newobj",
+					"numinlets" : 1,
+					"numoutlets" : 3,
+					"outlettype" : [ "", "", "" ],
+					"patching_rect" : [ 64.0, 609.0, 404.0, 22.0 ],
+					"saved_object_attributes" : 					{
+						"parameter_enable" : 0,
+						"parameter_mappable" : 0
+					}
+,
+					"text" : "pattr @name cachemode @bindto jitpolymovie::jsjitpolymovie::cachemode",
+					"varname" : "cachemode"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-48",
+					"maxclass" : "message",
+					"numinlets" : 2,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 503.0, 45.0, 107.0, 22.0 ],
+					"text" : "sendmovies rate 2"
+				}
+
+			}
+, 			{
 				"box" : 				{
 					"id" : "obj-51",
 					"maxclass" : "button",
@@ -156,7 +304,7 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 844.0, 121.0, 249.0, 35.0 ],
-					"text" : "\"Macintosh HD:/Users/rob/Desktop/polymoviedict3.json\""
+					"text" : "\"Macintosh HD:/Users/rob/Desktop/polymoviedict.json\""
 				}
 
 			}
@@ -201,7 +349,7 @@
 					"numinlets" : 2,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 107.0, 292.0, 51.0, 22.0 ],
+					"patching_rect" : [ 26.0, 292.0, 51.0, 22.0 ],
 					"text" : "readdict"
 				}
 
@@ -213,7 +361,7 @@
 					"numinlets" : 2,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 107.0, 243.5, 53.0, 22.0 ],
+					"patching_rect" : [ 26.0, 268.0, 53.0, 22.0 ],
 					"text" : "writedict"
 				}
 
@@ -390,8 +538,8 @@
 						"fileversion" : 1,
 						"appversion" : 						{
 							"major" : 8,
-							"minor" : 2,
-							"revision" : 0,
+							"minor" : 1,
+							"revision" : 10,
 							"architecture" : "x64",
 							"modernui" : 1
 						}
@@ -838,13 +986,6 @@
 					"outlettype" : [ "" ],
 					"parameter_enable" : 0,
 					"patching_rect" : [ 776.5, 295.0, 32.0, 30.0 ],
-					"saved_attribute_attributes" : 					{
-						"blinkcolor" : 						{
-							"expression" : ""
-						}
-
-					}
-,
 					"uparrow" : 0
 				}
 
@@ -861,13 +1002,6 @@
 					"parameter_enable" : 0,
 					"patching_rect" : [ 734.0, 295.0, 32.0, 30.0 ],
 					"rightarrow" : 0,
-					"saved_attribute_attributes" : 					{
-						"blinkcolor" : 						{
-							"expression" : ""
-						}
-
-					}
-,
 					"uparrow" : 0
 				}
 
@@ -917,20 +1051,8 @@
 					"numinlets" : 2,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 29.0, 154.0, 79.0, 22.0 ],
+					"patching_rect" : [ 26.0, 162.0, 79.0, 22.0 ],
 					"text" : "setdrawto ctx"
-				}
-
-			}
-, 			{
-				"box" : 				{
-					"id" : "obj-27",
-					"maxclass" : "message",
-					"numinlets" : 2,
-					"numoutlets" : 1,
-					"outlettype" : [ "" ],
-					"patching_rect" : [ 81.0, 199.0, 40.0, 22.0 ],
-					"text" : "setctx"
 				}
 
 			}
@@ -977,7 +1099,7 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 355.0, 361.0, 153.0, 22.0 ],
-					"text" : "jit_gl_texture u323004061"
+					"text" : "jit_matrix u013001576"
 				}
 
 			}
@@ -1002,8 +1124,9 @@
 					"numinlets" : 1,
 					"numoutlets" : 3,
 					"outlettype" : [ "jit_gl_texture", "", "" ],
-					"patching_rect" : [ 290.0, 292.0, 134.0, 22.0 ],
-					"text" : "jit.polymovie ctx @vol 0"
+					"patching_rect" : [ 290.0, 292.0, 128.0, 22.0 ],
+					"text" : "jit.gl.polymovie @vol 0",
+					"varname" : "jitpolymovie"
 				}
 
 			}
@@ -1027,8 +1150,8 @@
 						"fileversion" : 1,
 						"appversion" : 						{
 							"major" : 8,
-							"minor" : 2,
-							"revision" : 0,
+							"minor" : 1,
+							"revision" : 10,
 							"architecture" : "x64",
 							"modernui" : 1
 						}
@@ -1308,13 +1431,13 @@
 									"maxclass" : "bpatcher",
 									"numinlets" : 1,
 									"numoutlets" : 0,
-									"offset" : [ 0.0, -50.0 ],
+									"offset" : [ 0.0, -4.0 ],
 									"patcher" : 									{
 										"fileversion" : 1,
 										"appversion" : 										{
 											"major" : 8,
-											"minor" : 2,
-											"revision" : 0,
+											"minor" : 1,
+											"revision" : 10,
 											"architecture" : "x64",
 											"modernui" : 1
 										}
@@ -1498,14 +1621,6 @@
 									"presentation" : 1,
 									"presentation_rect" : [ 0.0, 0.0, 32.0, 32.0 ],
 									"saved_attribute_attributes" : 									{
-										"lcdcolor" : 										{
-											"expression" : ""
-										}
-,
-										"activebgoncolor" : 										{
-											"expression" : ""
-										}
-,
 										"valueof" : 										{
 											"parameter_enum" : [ "off", "on" ],
 											"parameter_longname" : "live.toggle",
@@ -2116,6 +2231,13 @@
 			}
 , 			{
 				"patchline" : 				{
+					"destination" : [ "obj-2", 0 ],
+					"source" : [ "obj-19", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
 					"destination" : [ "obj-1", 0 ],
 					"order" : 2,
 					"source" : [ "obj-2", 0 ]
@@ -2390,6 +2512,13 @@
 			}
 , 			{
 				"patchline" : 				{
+					"destination" : [ "obj-2", 0 ],
+					"source" : [ "obj-48", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
 					"destination" : [ "obj-3", 0 ],
 					"source" : [ "obj-5", 0 ]
 				}
@@ -2404,8 +2533,22 @@
 			}
 , 			{
 				"patchline" : 				{
+					"destination" : [ "obj-2", 0 ],
+					"source" : [ "obj-53", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
 					"destination" : [ "obj-50", 0 ],
 					"source" : [ "obj-54", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-2", 0 ],
+					"source" : [ "obj-55", 0 ]
 				}
 
 			}
@@ -2448,8 +2591,29 @@
 			}
 , 			{
 				"patchline" : 				{
+					"destination" : [ "obj-52", 0 ],
+					"source" : [ "obj-63", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-66", 0 ],
+					"source" : [ "obj-68", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
 					"destination" : [ "obj-2", 0 ],
 					"source" : [ "obj-7", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-74", 0 ],
+					"source" : [ "obj-73", 0 ]
 				}
 
 			}
@@ -2513,7 +2677,7 @@
 		}
 ,
 		"dependency_cache" : [ 			{
-				"name" : "jit.polymovie.maxpat",
+				"name" : "jit.gl.polymovie.maxpat",
 				"bootpath" : "~/dev/cycling/jitter-packages/jit.polymovie/patchers",
 				"patcherrelativepath" : ".",
 				"type" : "JSON",
