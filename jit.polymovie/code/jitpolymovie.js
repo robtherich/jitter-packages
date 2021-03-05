@@ -19,11 +19,16 @@ declareattribute("drawto", null, "setdrawto");
 var verbose = 0;
 declareattribute("verbose", null, null);
 
+var target = 0;
+declareattribute("target", null, "settarget");
+
 var curmov=-1;
 var isstopped=false;
 var saveargs=true;
 var readcount = 0;
 var loopmode = 1;
+
+var targets = [];
 
 // viddll supports all these, first 3 are supported by avf
 var filetypes = ["MPEG", "mpg4","MooV", "WVC1", "WMVA", "WMV3", "WMV2", "M4V ", "VfW "];
@@ -34,7 +39,7 @@ var movies = new Object();
 // "index" : movie index,
 // "listener" : movie listener,
 
-var movnames = new Array();
+var movnames = [];
 var curmovob = null;
 var movct = 0;
 
@@ -71,7 +76,7 @@ const useasync = (is820 || !isviddll);
 
 function bang() {
 	if(!drawtexture())
-		drawmovie();
+		drawmovies();
 }
 
 function swapcallback(event){
@@ -79,7 +84,7 @@ function swapcallback(event){
 
 	// if context is root we use swap, if jit.gl.node use draw
 	if ((event.eventname=="swap" || event.eventname=="draw")) {
-		drawmovie();
+		drawmovies();
 	}
 }
 swapcallback.local = 1;
@@ -94,14 +99,48 @@ function movcallback(event){
 		}
 	}
 	else if(event.eventname==="seeknotify") {
-		outlet(2, "seeknotify")
+		outlet(2, "seeknotify", target);
 	}
 	else if(event.eventname==="loopreport") {
-		outlet(2, "loopnotify")
+		outlet(2, "loopnotify", target);
 	}
 	//post("callback: " + event.subjectname + " sent "+ event.eventname + " with (" + event.args + ")\n");		
 }
 movcallback.local = 1;
+
+function drawmovies() {
+	if(!targets.length) {
+		drawmovie();
+	}
+	else {
+		outtype = outtex;
+		outnames = [];
+		outpositions = [];
+		for(i = 0; i < targets.length; i++) {
+			var o = targets[i];
+			if(!o)
+				continue;
+
+			if(drawtexture()) {
+				o.matrixcalc(dummymatrix,dummymatrix);
+				outnames.push(o.texture_name);
+			}
+			else {
+				outtype = outmat;
+				var movdim = o.movie_dim;
+				var matdim = dummymatrix.dim;
+				if(movdim[0]!=matdim[0] || movdim[1]!=matdim[1])
+					dummymatrix.dim=movdim;
+				o.matrixcalc(dummymatrix,dummymatrix);
+				outnames.push(dummymatrix.name);
+			}
+			outpositions.push(o.position);
+		}		
+		outlet(0, outtype, outnames);
+		outlet(2, "position", outpositions);
+	}
+}
+drawmovies.local = 1;
 
 function drawmovie() {
 	if(!curmovob)
@@ -120,7 +159,7 @@ function drawmovie() {
 		o.matrixcalc(dummymatrix,dummymatrix);
 		outlet(0,outmat,dummymatrix.name);
 	}
-	outlet(1, "position", o.position);
+	outlet(2, "position", o.position);
 }
 drawmovie.local = 1;
 
@@ -161,6 +200,7 @@ function setdrawto(arg) {
 }
 
 function clear() {
+	settarget(0);
 	readcount = 0;
 	curmovob = null;
 	for(n in movies) {
@@ -376,17 +416,33 @@ readloopstatefromdict.local = 1;
 // #mark Playback
 /////////////////////////////////////////////
 
+function settarget(t) {
+	postln("setting target " + t);
+	target = t;
+	if(target === 0 && targets.length) {
+		curmovob = targets[0];
+		targets.splice(0, targets.length);
+		postln("target length is: " + targets.length);
+	}
+	else if(target > 0) { 
+		if(target <= targets.length)
+			curmovob = targets[target - 1];
+		else 
+			curmovob = null;
+	}
+}
+
 function play() {
 	var i=0;	
 	if(arguments.length)
 		var i=arguments[0];
-		
+
 	if(movieindexvalid(i)) {
 		endmovie();
 		curmov = i;
 		curmovob = getmovie_index(curmov);
 		postln("playing movie: " + curmov + " " + curmovob.moviefile);
-		if(!isstopped)
+		if(!isstopped || target > 0)
 			doplay();
 		
 		curmovob.loop = loopmode;
@@ -394,12 +450,17 @@ function play() {
 		var loopi = curmovob.looppoints_secs[0] / curmovob.seconds;
 		var loopo = curmovob.looppoints_secs[1] / curmovob.seconds;
 		// output normalized looppoints for GUI
-		outlet(1, "looppoints", loopi, loopo);
+		outlet(2, "looppoints", loopi, loopo);
 
 		if(isviddll && cachemode == cachemode_auto) {
 			postln("autosizing cache: "+cache_sizeauto);
 			curmovob.cache_size = cache_sizeauto;
 		}
+	}
+
+	if(target > 0) {
+		targets[target-1] = curmovob;
+		postln("added target, length is: " + targets.length);
 	}
 }
 

@@ -1,8 +1,8 @@
 {
 	"name" : "jit.polymovie",
 	"version" : 1,
-	"creationdate" : 2082826677,
-	"modificationdate" : 3697796174,
+	"creationdate" : 2082826556,
+	"modificationdate" : 3697806385,
 	"viewrect" : [ 73.0, 281.0, 291.0, 498.0 ],
 	"autoorganize" : 1,
 	"hideprojectwindow" : 0,
@@ -12,8 +12,7 @@
 		"patchers" : 		{
 			"jit.polymovie-help.maxpat" : 			{
 				"kind" : "patcher",
-				"local" : 1,
-				"toplevel" : 1
+				"local" : 1
 			}
 ,
 			"jit.gl.polymovie.maxpat" : 			{
