@@ -1,8 +1,8 @@
 {
 	"name" : "jit.polymovie",
 	"version" : 1,
-	"creationdate" : 2082826556,
-	"modificationdate" : 3697806385,
+	"creationdate" : 2082826435,
+	"modificationdate" : 3697816795,
 	"viewrect" : [ 73.0, 281.0, 291.0, 498.0 ],
 	"autoorganize" : 1,
 	"hideprojectwindow" : 0,
@@ -34,6 +34,11 @@
 				"kind" : "helpfile",
 				"local" : 1
 			}
+,
+			"polymovieguitests.maxpat" : 			{
+				"kind" : "patcher",
+				"local" : 1
+			}
 
 		}
 ,
@@ -44,6 +49,11 @@
 			}
 ,
 			"polymoviegui_wind.js" : 			{
+				"kind" : "javascript",
+				"local" : 1
+			}
+,
+			"polymoviegrid.js" : 			{
 				"kind" : "javascript",
 				"local" : 1
 			}
